@@ -1,4 +1,4 @@
-# Backstage frontend KiwrthLog plugin
+# Backstage frontend KwirthLog plugin
 This package is a Backstage plugin for **viewing Kubernetes logs** in real-time (live-streaming) via Kwirth.
 
 **NOTE: KwithLog requires Kwirth vesrsion 0.3.155 or greater**
@@ -15,7 +15,7 @@ This Backstage plugin adds Backstage a feature for viewing real-time Kubernetes 
 
 When KwirthLog is correctly installed and configured, it is possible to view Kubernetes logs on your Backstage like in this sample:
 
-![kwirth-running](https://raw.githubusercontent.com/jfvilas/kwirthlog/master/images/kwirth-running.png)
+![kwirth-running](https://raw.githubusercontent.com/jfvilas/plugin-kwirth-log/master/images/kwirth-running.png)
 
 This frontend plugin includes just the visualization of log information. All needed configuration, and specially **permission settings**, are done in the backend plugin and the app-config.yaml. You can restrict access to pods, namespaces, clusters, etc... by configuring permissions to be applied on the backend plugin.
 
@@ -113,15 +113,15 @@ For Kwirth plugin to be usable on the frontend, you must tailor your Entity Page
 ## Ready, set, go!
 If you followed all these steps and our work is well done (not sure on this), you would see a 'KwirthLog' tab in your **Entity Page**, like this one:
 
-![kwirthlog-tab](https://raw.githubusercontent.com/jfvilas/kwirthlog/master/images/kwirthlog-tab.png)
+![kwirthlog-tab](https://raw.githubusercontent.com/jfvilas/plugin-kwirth-log/master/images/kwirthlog-tab.png)
 
 When you access the tab, if you have not yet tagged your entities you would see a message like this one explaning how to do that:
 
-![notfound](https://raw.githubusercontent.com/jfvilas/kwirthlog/master/images/kwirthlog-notfound.png)
+![notfound](https://raw.githubusercontent.com/jfvilas/plugin-kwirth-log/master/images/kwirthlog-notfound.png)
 
 Once you tagged your entities and your Kubernetes objects, you should see something similar to this:
 
-![available](https://raw.githubusercontent.com/jfvilas/kwirthlog/master/images/kwirthlog-available.png)
+![available](https://raw.githubusercontent.com/jfvilas/plugin-kwirth-log/master/images/kwirthlog-available.png)
 
 KwirthLog is ready to show logs!!
 
@@ -131,7 +131,7 @@ Select the pod/pods and container/containers you want to stream log, *click PLAY
 
 Now you will see your log refreshing in real-time. If you selected more than one namespace/pod/contianer, the log stream will contain all the source log lines streamed following time line.
 
-![running](https://raw.githubusercontent.com/jfvilas/kwirthlog/master/images/kwirthlog-running.png)
+![running](https://raw.githubusercontent.com/jfvilas/plugin-kwirth-log/master/images/kwirthlog-running.png)
 
 Feel free to open issues and ask for more features.
 
@@ -145,4 +145,4 @@ When the log stream starts, and all along the life of the stream (until it gets 
 The icons will light up in its corresponding color when a new message arrives.
 
 This is how it feels:
-![status info](https://raw.githubusercontent.com/jfvilas/kwirthlog/master/images/status-info.png)
+![status info](https://raw.githubusercontent.com/jfvilas/plugin-kwirth-log/master/images/status-info.png)
