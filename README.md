@@ -119,7 +119,11 @@ When you access the tab, if you have not yet tagged your entities you would see 
 
 ![notfound](https://raw.githubusercontent.com/jfvilas/plugin-kwirth-log/master/images/kwirthlog-notfound.png)
 
-Once you tagged your entities and your Kubernetes objects, you should see something similar to this:
+But, if the component is found on some of the clusters configured in Backstage, your screen will look like following one, showing some cluster that can be selected and some others that can't.
+
+![notfound-some](https://raw.githubusercontent.com/jfvilas/plugin-kwirth-log/master/images/kwirthlog-notfound-on-cluster.png)
+
+Once you tagged your entities and your Kubernetes objects correctly, you should see something similar to this:
 
 ![available](https://raw.githubusercontent.com/jfvilas/plugin-kwirth-log/master/images/kwirthlog-available.png)
 

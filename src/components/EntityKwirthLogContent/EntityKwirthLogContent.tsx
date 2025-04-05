@@ -359,9 +359,6 @@ export const EntityKwirthLogContent = () => {
     }
     
     const onSelectObject = (namespaces:string[], podNames:string[], containerNames:string[]) => {
-        console.log(namespaces)
-        console.log(podNames)
-        console.log(containerNames)
         setSelectedNamespaces(namespaces)
         setSelectedPodNames(podNames)
         setSelectedContainerNames(containerNames)
