@@ -1,1 +1,0 @@
-export { NamespaceChips } from './NamespaceChips'

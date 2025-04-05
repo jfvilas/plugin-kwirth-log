@@ -17,8 +17,8 @@ import React from 'react'
 import { Entity } from '@backstage/catalog-model'
 import { CodeSnippet } from '@backstage/core-components'
 import { Button, Grid, Typography } from '@material-ui/core'
-import KubelogComponentNotFound from '../../assets/kwirth-log-component-not-found.svg'
-import { ANNOTATION_KUBELOG_LOCATION } from '@jfvilas/plugin-kubelog-common'
+import KwirthComponentNotFound from '../../assets/kwirth-log-component-not-found.svg'
+import { ANNOTATION_KWIRTH_LOCATION } from '@jfvilas/plugin-kwirth-common'
 
 enum ErrorType {
   NO_PODS,
@@ -31,7 +31,7 @@ metadata:
   name: '$entityName'
   description: '$entityDescription'
   labels:
-    ${ANNOTATION_KUBELOG_LOCATION}: '$entityName'
+    ${ANNOTATION_KWIRTH_LOCATION}: '$entityName'
 spec:
   selector:
     matchLabels:
@@ -41,7 +41,7 @@ spec:
       name: '$entityName'-pod
       labels:
         app: '$entityName'
-        ${ANNOTATION_KUBELOG_LOCATION}: '$entityName'
+        ${ANNOTATION_KWIRTH_LOCATION}: '$entityName'
     spec:
       containers:
         - name: '$entityName'
@@ -85,7 +85,7 @@ const ComponentNotFound = (props: {error: ErrorType, entity:Entity}) => {
                     </Grid>
                 </Grid>
             </Grid>
-            <img src={KubelogComponentNotFound} style={{ left:'10%', marginTop:'10%', width:'30%', position:'relative' }} />
+            <img src={KwirthComponentNotFound} style={{ left:'10%', marginTop:'10%', width:'30%', position:'relative' }} />
         </Grid>
         <Button variant="contained" color="primary" target="_blank" href="https://backstage.io/docs/features/kubernetes/configuration#surfacing-your-kubernetes-components-as-part-of-an-entity">
             READ MORE

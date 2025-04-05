@@ -391,7 +391,7 @@ export const EntityKwirthLogContent = () => {
         )}
 
         {!isKwirthAvailable(entity) && !loading && (
-            <MissingAnnotationEmptyState readMoreUrl='https://github.com/jfvilas/kubelog' annotation={ANNOTATION_KWIRTH_LOCATION}/>
+            <MissingAnnotationEmptyState readMoreUrl='https://github.com/jfvilas/plugin-kwirth-log' annotation={ANNOTATION_KWIRTH_LOCATION}/>
         )}
 
         { isKwirthAvailable(entity) && !loading && resources && resources.length===0 &&

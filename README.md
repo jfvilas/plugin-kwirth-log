@@ -58,7 +58,8 @@ For Kwirth plugin to be usable on the frontend, you must tailor your Entity Page
     Firstly, import the plugin module.
     ```typescript
     // In packages/app/src/components/catalog/EntityPage.tsx
-    import { EntityKwirthLogContent, isKirthAvailable } from '@jfvilas/plugin-kwirth-log';
+    import { EntityKwirthLogContent } from '@jfvilas/plugin-kwirth-log';
+    import { isKwirthAvailable } from '@jfvilas/plugin-kwirth-common';
     ```
 
     Then, add a tab to your EntityPage (the 'if' is optional, you can keep the 'KwirthLog' tab always visible if you prefer to do it that way).
