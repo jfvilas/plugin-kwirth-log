@@ -40,7 +40,7 @@ export class KwirthLogClient implements KwirthLogApi {
      */
     async getVersion(): Promise<string> {
         try {
-            const baseUrl = await this.discoveryApi.getBaseUrl('kwirthbackstage')
+            const baseUrl = await this.discoveryApi.getBaseUrl('kwirth')
             const targetUrl = `${baseUrl}/version`
 
             const result = await this.fetchApi.fetch(targetUrl)
@@ -58,7 +58,7 @@ export class KwirthLogClient implements KwirthLogApi {
 
     async getResources(entity:Entity): Promise<ClusterValidPods> {
         try {
-            const baseUrl = await this.discoveryApi.getBaseUrl('kwirthbackstage')
+            const baseUrl = await this.discoveryApi.getBaseUrl('kwirth')
             const targetUrl = `${baseUrl}/start`
 
             var payload=JSON.stringify(entity)
@@ -77,7 +77,7 @@ export class KwirthLogClient implements KwirthLogApi {
 
     async requestAccess(entity:Entity, channel:string, scopes:InstanceConfigScopeEnum[]): Promise<ClusterValidPods[]> {
         try {
-            const baseUrl = await this.discoveryApi.getBaseUrl('kwirthbackstage')
+            const baseUrl = await this.discoveryApi.getBaseUrl('kwirth')
             var targetUrl:URL= new URL (`${baseUrl}/access`)
             targetUrl.searchParams.append('scopes',scopes.join(','))  //+++ poner mas elegante
             targetUrl.searchParams.append('channel',channel)
