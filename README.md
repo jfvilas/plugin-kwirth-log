@@ -15,7 +15,7 @@ This Backstage plugin adds Backstage a feature for viewing real-time Kubernetes 
 
 When KwirthLog is correctly installed and configured, it is possible to view Kubernetes logs on your Backstage like in this sample:
 
-![kwirth-running](https://raw.githubusercontent.com/jfvilas/plugin-kwirth-log/master/images/kwirth-running.png)
+![kwirth-running](https://raw.githubusercontent.com/jfvilas/plugin-kwirth-log/master/images/kwirthlog-running.png)
 
 This frontend plugin includes just the visualization of log information. All needed configuration, and specially **permission settings**, are done in the backend plugin and the app-config.yaml. You can restrict access to pods, namespaces, clusters, etc... by configuring permissions to be applied on the backend plugin.
 
