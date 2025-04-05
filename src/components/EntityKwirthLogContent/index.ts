@@ -1,0 +1,1 @@
+export { EntityKwirthLogContent } from './EntityKwirthLogContent';
