@@ -150,3 +150,6 @@ The icons will light up in its corresponding color when a new message arrives.
 
 This is how it feels:
 ![status info](https://raw.githubusercontent.com/jfvilas/plugin-kwirth-log/master/images/status-info.png)
+
+If you click on one of the status icons when theyr are enableds (coloured), you will see the detail of the status.
+![status detail](https://raw.githubusercontent.com/jfvilas/plugin-kwirth-log/master/images/status-detail.png)
