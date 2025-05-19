@@ -3,8 +3,11 @@ This package is a Backstage plugin for **viewing Kubernetes logs** in real-tiem 
 
 
 ## Version compatibility
-+++ add table
+This very first version of KwirthLog is compatible with Kwirth core server version **0.3.484**. Following table shows version compatibility between this plugin KwirthLog and Kwirth Core.
 
+| Plugin KwirthLog version | Kwirth version |
+|-|-|
+|0.0.1|0.3.484|
 
 ## What for?
 This Backstage plugin allows you viewing Kubernetes logs linked to your Backstage entities directly inside your Backstage instance. It's very important to understand that for this plugin to work you need to install Kwirth on your Kubernetes cluster, that is, this plugin is just another front end for [Kwirth](https://jfvilas.github.io/kwirth).
