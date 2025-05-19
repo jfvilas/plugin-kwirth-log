@@ -20,7 +20,6 @@ import { ClusterValidPods } from '@jfvilas/plugin-kwirth-common'
 
 export interface KwirthLogApi {
     getResources(entity:Entity): Promise<any>
-    //requestAccess(entity:Entity, scopes:string[]): Promise<any>
     requestAccess(entity:Entity, channel:string, scopes:InstanceConfigScopeEnum[]): Promise<ClusterValidPods[]>
     getVersion(): Promise<any>
 }

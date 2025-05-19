@@ -1,5 +1,5 @@
 /*
-Copyright 2024 Julio Fernandez
+Copyright 2025 Julio Fernandez
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,24 +18,23 @@ import useAsync from 'react-use/esm/useAsync'
 
 import { Progress, WarningPanel } from '@backstage/core-components'
 import { useApi } from '@backstage/core-plugin-api'
-import { ANNOTATION_KWIRTH_LOCATION, isKwirthAvailable, ClusterValidPods } from '@jfvilas/plugin-kwirth-common'
+import { ANNOTATION_KWIRTH_LOCATION, isKwirthAvailable, ClusterValidPods, PodData, ILogLine, IStatusLine } from '@jfvilas/plugin-kwirth-common'
 import { MissingAnnotationEmptyState, useEntity } from '@backstage/plugin-catalog-react'
 
 // kwirthlog
 import { kwirthLogApiRef } from '../../api'
-import { accessKeySerialize, LogMessage, InstanceConfigActionEnum, InstanceConfigChannelEnum, InstanceConfigFlowEnum, InstanceConfigScopeEnum, InstanceConfigViewEnum, InstanceMessage, InstanceMessageTypeEnum, SignalMessage, SignalMessageLevelEnum, InstanceConfigObjectEnum, InstanceConfig } from '@jfvilas/kwirth-common'
+import { accessKeySerialize, LogMessage, InstanceMessageActionEnum, InstanceConfigScopeEnum, InstanceConfigViewEnum, InstanceMessage, InstanceMessageTypeEnum, SignalMessage, SignalMessageLevelEnum, InstanceConfigObjectEnum, InstanceConfig, InstanceMessageFlowEnum, InstanceMessageChannelEnum, OpsMessage, OpsCommandEnum, RouteMessage, OpsMessageResponse } from '@jfvilas/kwirth-common'
 
 // kwirthlog components
 import { ComponentNotFound, ErrorType } from '../ComponentNotFound'
+import { ObjectSelector } from '../ObjectSelector'
 import { Options } from '../Options'
 import { ClusterList } from '../ClusterList'
-import { ShowError } from '../ShowError'
 import { StatusLog } from '../StatusLog'
 
 
 // Material-UI
-import { Grid } from '@material-ui/core'
-import { Card, CardHeader, CardContent } from '@material-ui/core'
+import { Grid, Card, CardHeader, CardContent } from '@material-ui/core'
 import Divider from '@material-ui/core/Divider'
 import IconButton from '@material-ui/core/IconButton'
 import Typography from '@material-ui/core/Typography'
@@ -49,27 +48,26 @@ import WarningIcon from '@material-ui/icons/Warning'
 import ErrorIcon from '@material-ui/icons/Error'
 import DownloadIcon from '@material-ui/icons/CloudDownload'
 import KwirthLogLogo from '../../assets/kwirthlog-logo.svg'
-import { ObjectSelector } from '../ObjectSelector'
+import RefreshIcon from '@material-ui/icons/Refresh'
 
-const LOG_MAX_MESSAGES=1000;
+const LOG_MAX_MESSAGES=1000
 
-export const EntityKwirthLogContent = () => { 
+export const EntityKwirthLogContent = (props:{ enableRestart: boolean }) => { 
     const { entity } = useEntity()
     const kwirthLogApi = useApi(kwirthLogApiRef)
     const [resources, setResources] = useState<ClusterValidPods[]>([])
     const [selectedClusterName, setSelectedClusterName] = useState('')
-    const [_namespaceList, setNamespaceList] = useState<string[]>([]) //+++
     const [selectedNamespaces, setSelectedNamespaces] = useState<string[]>([])
     const [selectedPodNames, setSelectedPodNames] = useState<string[]>([])
     const [selectedContainerNames, setSelectedContainerNames] = useState<string[]>([])
-    const [showError, setShowError] = useState('')  //+++ review if this is needed once we have errorMessages
     const [started, setStarted] = useState(false)
     const [stopped, setStopped] = useState(true)
     const paused=useRef<boolean>(false)
-    const [messages, setMessages] = useState<LogMessage[]>([])
-    const [pendingMessages, setPendingMessages] = useState<LogMessage[]>([])
-    const [statusMessages, setStatusMessages] = useState<SignalMessage[]>([])
+    const [messages, setMessages] = useState<ILogLine[]>([])
+    const [pendingMessages, setPendingMessages] = useState<ILogLine[]>([])
+    const [statusMessages, setStatusMessages] = useState<IStatusLine[]>([])
     const [websocket, setWebsocket] = useState<WebSocket>()
+    const [instance, setInstance] = useState<string>()
     const kwirthLogOptionsRef = useRef<any>({timestamp:false, follow:true, fromStart:false})
     const [showStatusDialog, setShowStatusDialog] = useState(false)
     const [statusLevel, setStatusLevel] = useState<SignalMessageLevelEnum>(SignalMessageLevelEnum.INFO)
@@ -78,9 +76,13 @@ export const EntityKwirthLogContent = () => {
     const [ backendVersion, setBackendVersion ] = useState<string>('')
     const { loading, error } = useAsync ( async () => {
         if (backendVersion==='') setBackendVersion(await kwirthLogApi.getVersion())
-        var data = await kwirthLogApi.requestAccess(entity,'log', [InstanceConfigScopeEnum.VIEW,InstanceConfigScopeEnum.RESTART])
+        let reqScopes = [InstanceConfigScopeEnum.VIEW]
+        if (props.enableRestart) reqScopes.push(InstanceConfigScopeEnum.RESTART)
+        let data:ClusterValidPods[] = await kwirthLogApi.requestAccess(entity, InstanceMessageChannelEnum.LOG, reqScopes)
         setResources(data)
     })
+    const buffer = useRef<Map<string,string>>(new Map())
+
 
     const clickStart = (options:any) => {
         if (!paused.current) {
@@ -97,12 +99,12 @@ export const EntityKwirthLogContent = () => {
         }
     }
 
-    const clickPause = () => {
+    const onClickPause = () => {
         setStarted(false)
         paused.current=true
     }
 
-    const clickStop = () => {
+    const onClickStop = () => {
         setStarted(false)
         setStopped(true)
         paused.current=false
@@ -112,60 +114,87 @@ export const EntityKwirthLogContent = () => {
     const onSelectCluster = (name:string|undefined) => {
         if (name) {
             setSelectedClusterName(name)
-            resources.filter(cluster => cluster.name===name).map ( x => {
-                var namespaces=Array.from(new Set(x.data.map ( (p:any) => p.namespace))) as string[]
-                setNamespaceList(namespaces)
-            })
             setMessages([{
-                channel: InstanceConfigChannelEnum.LOG,
                 type: InstanceMessageTypeEnum.SIGNAL,
                 text: 'Select namespace in order to decide which pod logs to view.',
-                instance: ''
+                namespace: '',
+                pod: '',
+                container: ''
             }])
             setSelectedNamespaces([])
             setSelectedPodNames([])
             setSelectedContainerNames([])
             setStatusMessages([])
-            clickStop()
+            onClickStop()
         }
     }
 
     const processLogMessage = (wsEvent:any) => {
-        let msg = JSON.parse(wsEvent.data) as InstanceMessage
-        switch (msg.type) {
-            case 'data':
-                var lmsg = msg as LogMessage
-                if (paused.current) {
-                    setPendingMessages((prev) => [ ...prev, lmsg ])
+        let instanceMessage = JSON.parse(wsEvent.data) as InstanceMessage
+        switch (instanceMessage.type) {
+            case InstanceMessageTypeEnum.DATA:
+                let logMessage = instanceMessage as LogMessage
+                let bname = logMessage.namespace+'/'+logMessage.pod+'/'+logMessage.container
+                let text = logMessage.text
+                if (!buffer.current.has(bname)) buffer.current.set(bname,'')
+                if (buffer.current.get(bname)) {
+                    text = buffer.current.get(bname) + text
+                    buffer.current.set(bname,'')
+                }
+                if (!text.endsWith('\n')) {
+                    let i = text.lastIndexOf('\n')
+                    buffer.current.set(bname,text.substring(i))
+                    text = text.substring(0,i)
+                }
+
+                for (let line of text.split('\n')) {
+                    if (line.trim() === '') continue
+
+                    let logLine:ILogLine = {
+                        text: line,
+                        namespace: logMessage.namespace,
+                        pod: logMessage.pod,
+                        container: logMessage.container,
+                        type: logMessage.type
+                    }
+
+                    if (paused.current) {
+                        setPendingMessages((prev) => [ ...prev, logLine ])
+                    }
+                    else {
+                        setMessages((prev) => {
+                            while (prev.length>LOG_MAX_MESSAGES-1) {
+                                prev.splice(0,1)
+                            }
+                            if (kwirthLogOptionsRef.current.follow && lastRef.current) lastRef.current.scrollIntoView({ behavior: 'instant', block: 'start' })
+                            return [ ...prev, logLine ]
+                        })
+                    }
+                }
+                break
+            case InstanceMessageTypeEnum.SIGNAL:
+                if (instanceMessage.flow === InstanceMessageFlowEnum.RESPONSE && instanceMessage.action === InstanceMessageActionEnum.START) {
+                    setInstance(instanceMessage.instance)
                 }
                 else {
-                    setMessages((prev) => {
-                        while (prev.length>LOG_MAX_MESSAGES-1) {
-                            prev.splice(0,1)
-                        }
-                        if (kwirthLogOptionsRef.current.follow && lastRef.current) lastRef.current.scrollIntoView({ behavior: 'instant', block: 'start' })
-                        return [ ...prev, lmsg ]
-                    })
-                }        
-                break
-            case 'signal':
-                let smsg = msg as SignalMessage
-                 setStatusMessages ((prev) => [...prev, smsg])
+                    let signalMessage = instanceMessage as SignalMessage
+                    addMessage(signalMessage.level, signalMessage.text)
+                }
                 break
             default:
-                console.log('Invalid message type:')
-                console.log(msg)
-                setStatusMessages ((prev) => [...prev, {
-                    channel: InstanceConfigChannelEnum.LOG,
-                    type: InstanceMessageTypeEnum.SIGNAL,
-                    level: SignalMessageLevelEnum.ERROR,
-                    text: 'Invalid message type received: '+msg.type,
-                    instance: ''
-                }])
+                addMessage(SignalMessageLevelEnum.ERROR, 'Invalid message type received: ' + instanceMessage.type)
                 break
         }
     }
-    
+
+    const addMessage = (level:SignalMessageLevelEnum, text:string) => {
+        setStatusMessages ((prev) => [...prev, {
+            level,
+            text,
+            type: InstanceMessageTypeEnum.SIGNAL,
+        }])
+    }
+
     const websocketOnMessage = (wsEvent:any) => {
         let instanceMessage:InstanceMessage
         try {
@@ -178,25 +207,32 @@ export const EntityKwirthLogContent = () => {
         }
 
         switch(instanceMessage.channel) {
-            case 'log':
+            case InstanceMessageChannelEnum.LOG:
                 processLogMessage(wsEvent)
                 break
+            case InstanceMessageChannelEnum.OPS:
+                let opsMessage = instanceMessage as OpsMessageResponse
+                if (opsMessage.data?.data) 
+                    addMessage (SignalMessageLevelEnum.WARNING, 'Operations message: '+opsMessage.data.data)
+                else
+                    addMessage (SignalMessageLevelEnum.WARNING, 'Operations message: '+JSON.stringify(opsMessage))
+                break
             default:
-                console.log('Invalid channel in message: ', instanceMessage)
+                addMessage (SignalMessageLevelEnum.ERROR, 'Invalid channel in message: '+instanceMessage.channel)
+                addMessage (SignalMessageLevelEnum.ERROR, 'Invalid message: '+JSON.stringify(instanceMessage))
                 break
         }
-
     }
 
     const websocketOnOpen = (ws:WebSocket, options:any) => {
         let cluster=resources.find(cluster => cluster.name === selectedClusterName)
         if (!cluster) {
-            //+++ setShowError(msg.text);
+            addMessage(SignalMessageLevelEnum.ERROR,'No cluster selected')
             return
         }
         let pods = cluster.data.filter(p => selectedNamespaces.includes(p.namespace))
         if (!pods) {
-            //+++ setShowError(msg.text);
+            addMessage(SignalMessageLevelEnum.ERROR,'No pods found')
             return
         }
         console.log(`WS connected`)
@@ -211,14 +247,14 @@ export const EntityKwirthLogContent = () => {
                 }
             }
             let iConfig:InstanceConfig = {
-                channel: InstanceConfigChannelEnum.LOG,
+                channel: InstanceMessageChannelEnum.LOG,
                 objects: InstanceConfigObjectEnum.PODS,
-                action: InstanceConfigActionEnum.START,
-                flow: InstanceConfigFlowEnum.REQUEST,
+                action: InstanceMessageActionEnum.START,
+                flow: InstanceMessageFlowEnum.REQUEST,
                 instance: '',
                 accessKey: accessKeySerialize(accessKey),
                 scope: InstanceConfigScopeEnum.VIEW,
-                view: (selectedContainerNames.length>0 ? InstanceConfigViewEnum.CONTAINER : InstanceConfigViewEnum.POD),
+                view: (selectedContainerNames.length > 0 ? InstanceConfigViewEnum.CONTAINER : InstanceConfigViewEnum.POD),
                 namespace: selectedNamespaces.join(','),
                 group: '',
                 pod: selectedPodNames.map(p => p).join(','),
@@ -228,19 +264,21 @@ export const EntityKwirthLogContent = () => {
                     previous: false,
                     maxMessages: LOG_MAX_MESSAGES,
                     fromStart: options.fromStart
-                }
+                },
+                type: InstanceMessageTypeEnum.SIGNAL
             }
             ws.send(JSON.stringify(iConfig))
         }
         else {
-            // +++ error to user
+            addMessage(SignalMessageLevelEnum.ERROR,'No accessKey for starting log streaming')
+            return
         }
     }
 
     const startLogViewer = (options:any) => {
         let cluster=resources.find(cluster => cluster.name===selectedClusterName);
         if (!cluster) {
-            //+++ show wargning
+            addMessage(SignalMessageLevelEnum.ERROR,'No cluster selected')
             return
         }
 
@@ -254,10 +292,11 @@ export const EntityKwirthLogContent = () => {
         }
         catch (err) {
             setMessages([ {
-                channel: InstanceConfigChannelEnum.LOG,
                 type: InstanceMessageTypeEnum.DATA,
                 text: `Error opening log stream: ${err}`,
-                instance: ''
+                namespace: '',
+                pod: '',
+                container: ''
             } ])
         }
 
@@ -272,10 +311,11 @@ export const EntityKwirthLogContent = () => {
 
     const stopLogViewer = () => {
         messages.push({
-            channel: InstanceConfigChannelEnum.LOG,
             type: InstanceMessageTypeEnum.DATA,
             text: '============================================================================================================================',
-            instance: ''
+            namespace: '',
+            pod: '',
+            container: ''
         })
         websocket?.close()
     }
@@ -287,7 +327,7 @@ export const EntityKwirthLogContent = () => {
         }
     }
 
-    const handleDownload = () => {
+    const onClickDownload = () => {
       let content = preRef.current!.innerHTML.replaceAll('<pre>','').replaceAll('</pre>','\n')
       content = content.replaceAll('<span style="color: green;">','')
       content = content.replaceAll('<span style="color: blue;">','')
@@ -305,23 +345,80 @@ export const EntityKwirthLogContent = () => {
       document.body.removeChild(link)
       URL.revokeObjectURL(url)
     }
-  
+
+    const onClickRestart = () => {
+        // we perform a route command from channel 'log' to channel 'ops'
+        var cluster=resources.find(cluster => cluster.name===selectedClusterName);
+        if (!cluster) {
+            addMessage(SignalMessageLevelEnum.ERROR,'No cluster selected')
+            return
+        }
+        let restartKey = cluster.accessKeys.get(InstanceConfigScopeEnum.RESTART)
+        if (!restartKey) {
+            addMessage(SignalMessageLevelEnum.ERROR,'No access key present')
+            return
+        }
+        if (!instance) {
+            addMessage(SignalMessageLevelEnum.ERROR,'No instance has been established')
+            return
+        }
+
+        let pods:PodData[] = (cluster.data as PodData[]).filter(pod => selectedNamespaces.includes(pod.namespace))
+        for (let pod of pods) {
+            let om:OpsMessage = {
+                msgtype: 'opsmessage',
+                action: InstanceMessageActionEnum.COMMAND,
+                flow: InstanceMessageFlowEnum.IMMEDIATE,
+                type: InstanceMessageTypeEnum.DATA,
+                channel: InstanceMessageChannelEnum.OPS,
+                instance: '',
+                id: '1',
+                accessKey: accessKeySerialize(restartKey),
+                command: OpsCommandEnum.RESTARTPOD,
+                namespace: pod.namespace,
+                group: '',
+                pod: pod.name,
+                container: ''
+            }
+            let rm: RouteMessage = {
+                msgtype: 'routemessage',
+                accessKey: accessKeySerialize(restartKey),
+                destChannel: InstanceMessageChannelEnum.OPS,
+                action: InstanceMessageActionEnum.ROUTE,
+                flow: InstanceMessageFlowEnum.IMMEDIATE,
+                type: InstanceMessageTypeEnum.SIGNAL,
+                channel: InstanceMessageChannelEnum.LOG,
+                instance: instance,
+                data: om
+            }
+            websocket?.send(JSON.stringify(rm))
+        }
+    }
+
     const actionButtons = () => {
-        let hasViewKey=false
+        let hasViewKey=false, hasRestartKey = false
         let cluster=resources.find(cluster => cluster.name===selectedClusterName)
-        if (cluster) hasViewKey = Boolean(cluster.accessKeys.get(InstanceConfigScopeEnum.VIEW))
+        if (cluster) {
+            hasViewKey = Boolean(cluster.accessKeys.get(InstanceConfigScopeEnum.VIEW))
+            hasRestartKey = Boolean(cluster.accessKeys.get(InstanceConfigScopeEnum.RESTART))
+        }
 
         return <>
-            <IconButton title='Download' onClick={handleDownload} disabled={messages.length<=1}>
+            { props.enableRestart &&
+                <IconButton title='Restart' onClick={onClickRestart} disabled={selectedPodNames.length === 0 || !hasRestartKey || !websocket || !started}>
+                    <RefreshIcon />
+                </IconButton>
+            }
+            <IconButton title='Download' onClick={onClickDownload} disabled={messages.length<=1}>
                 <DownloadIcon />
             </IconButton>
             <IconButton onClick={() => clickStart(kwirthLogOptionsRef.current)} title="Play" disabled={started || !paused || selectedPodNames.length === 0 || !hasViewKey}>
                 <PlayIcon />
             </IconButton>
-            <IconButton onClick={clickPause} title="Pause" disabled={!((started && !paused.current) && selectedPodNames.length > 0)}>
+            <IconButton onClick={onClickPause} title="Pause" disabled={!((started && !paused.current) && selectedPodNames.length > 0)}>
                 <PauseIcon />
             </IconButton>
-            <IconButton onClick={clickStop} title="Stop" disabled={stopped || selectedPodNames.length === 0}>
+            <IconButton onClick={onClickStop} title="Stop" disabled={stopped || selectedPodNames.length === 0}>
                 <StopIcon />
             </IconButton>
         </>
@@ -343,7 +440,7 @@ export const EntityKwirthLogContent = () => {
                         <InfoIcon style={{ color:statusMessages.some(m=>m.type === InstanceMessageTypeEnum.SIGNAL && m.level=== SignalMessageLevelEnum.INFO)?'blue':'#BDBDBD'}}/>
                     </IconButton>
                     <IconButton title="warning" disabled={!statusMessages.some(m=>m.type === InstanceMessageTypeEnum.SIGNAL && m.level=== SignalMessageLevelEnum.WARNING)} onClick={() => show(SignalMessageLevelEnum.WARNING)} style={{marginLeft:'-16px'}}>
-                        <WarningIcon style={{ color:statusMessages.some(m=>m.type === InstanceMessageTypeEnum.SIGNAL && m.level=== SignalMessageLevelEnum.WARNING)?'gold':'#BDBDBD'}}/>
+                        <WarningIcon style={{ color:statusMessages.some(m=>m.type === InstanceMessageTypeEnum.SIGNAL && m.level=== SignalMessageLevelEnum.WARNING)?'orange':'#BDBDBD'}}/>
                     </IconButton>
                     <IconButton title="error" disabled={!statusMessages.some(m=>m.type === InstanceMessageTypeEnum.SIGNAL && m.level=== SignalMessageLevelEnum.ERROR)} onClick={() => show(SignalMessageLevelEnum.ERROR)} style={{marginLeft:'-16px'}}>
                         <ErrorIcon style={{ color:statusMessages.some(m=>m.type === InstanceMessageTypeEnum.SIGNAL && m.level=== SignalMessageLevelEnum.ERROR)?'red':'#BDBDBD'}}/>
@@ -364,25 +461,24 @@ export const EntityKwirthLogContent = () => {
         setSelectedContainerNames(containerNames)
     }
 
-    const formatMessage = (m:LogMessage) => {
-        if (!m.pod) {
-            return <>{m.text+'\n'}</>
+    const formatMessage = (logLine:ILogLine) => {
+        if (!logLine.pod) {
+            return <>{logLine.text+'\n'}</>
         }
 
         let podPrefix = <></>
         if (selectedPodNames.length !== 1) {
-            podPrefix  = <span style={{color:"green"}}>{m.pod+' '}</span>
+            podPrefix  = <span style={{color:"green"}}>{logLine.pod+' '}</span>
         }
 
         let containerPrefix = <></>
         if (selectedContainerNames.length !== 1){
-            containerPrefix = <span style={{color:"blue"}}>{m.container+' '}</span>
+            containerPrefix = <span style={{color:"blue"}}>{logLine.container+' '}</span>
         }
-        return <>{podPrefix}{containerPrefix}{m.text+'\n'}</>
+        return <>{podPrefix}{containerPrefix}{logLine.text+'\n'}</>
     }
 
     return (<>
-        { showError!=='' && <ShowError message={showError} onClose={() => setShowError('')}/> }
 
         { loading && <Progress/> }
 
@@ -403,8 +499,8 @@ export const EntityKwirthLogContent = () => {
         }
 
         { isKwirthAvailable(entity) && !loading && resources && resources.length>0 && resources.reduce((sum,cluster) => sum+cluster.data.length, 0)>0 &&
-            <Grid container direction='row' spacing={3}>
-                <Grid container item xs={2} direction='column' spacing={3}>
+            <Grid container direction='row' style={{height:'100%'}}>
+                <Grid container item direction='column'style={{width:'20%'}}>
                     <Grid item>
                         <Card>
                             <ClusterList resources={resources} selectedClusterName={selectedClusterName} onSelect={onSelectCluster}/>
@@ -417,7 +513,7 @@ export const EntityKwirthLogContent = () => {
                     </Grid>
                 </Grid>
 
-                <Grid item xs={10}>
+                <Grid item style={{width:'80%'}}>
 
                     { !selectedClusterName && 
                         <img src={KwirthLogLogo} alt='No cluster selected' style={{ left:'40%', marginTop:'10%', width:'20%', position:'relative' }} />
@@ -447,7 +543,6 @@ export const EntityKwirthLogContent = () => {
                 </Grid>
             </Grid>
         }
-
         { showStatusDialog && <StatusLog level={statusLevel} onClose={() => setShowStatusDialog(false)} statusMessages={statusMessages} onClear={statusClear}/>}
     </>)
 }

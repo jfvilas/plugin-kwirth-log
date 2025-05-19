@@ -3,7 +3,7 @@ import { ClusterValidPods } from '@jfvilas/plugin-kwirth-common'
 import FormControl from '@material-ui/core/FormControl'
 import Select from '@material-ui/core/Select'
 import MenuItem from '@material-ui/core/MenuItem'
-import { Checkbox, Chip, Grid, Input, ListItemText } from '@material-ui/core'
+import { Checkbox, Chip, Grid, ListItemText } from '@material-ui/core'
 import { InstanceConfigScopeEnum, parseResources } from '@jfvilas/kwirth-common'
 
 interface IProps {
@@ -64,8 +64,8 @@ const ObjectSelector = (props: IProps) => {
         if (!props.cluster.accessKeys.has(InstanceConfigScopeEnum.VIEW)) return false
         let accessKey = props.cluster.accessKeys.get(InstanceConfigScopeEnum.VIEW)
         if (accessKey) {
-            let resources = parseResources(accessKey?.resource)
-            return (resources.find(r => r.namespace === namespace))
+            let resources = parseResources(accessKey.resources)
+            return (resources.find(resource => resource.namespaces === namespace))
         }
         else return false
 
@@ -109,23 +109,23 @@ const ObjectSelector = (props: IProps) => {
             <Grid container item xs={12} spacing={2}>
                 <Grid item xs={6}>
                     <FormControl size='small' fullWidth>
-                            <Select value={props.selectedPodNames} input={<Input />} multiple onChange={onPodNameChange} renderValue={(selected) => (selected as string[]).join(', ')} disabled={props.disabled || props.selectedNamespaces.length===0 || getPodList().length===1}>
-                                {
-                                    getPodList().map(pod => {
-                                        return (
-                                            <MenuItem key={pod.name} value={pod.name}>
-                                                <Checkbox checked={props.selectedPodNames.includes(pod.name)} />
-                                                <ListItemText primary={pod.name} />
-                                            </MenuItem>
-                                        )
-                                    })
-                                }
-                            </Select>
-                        </FormControl>
+                        <Select value={props.selectedPodNames} MenuProps={{variant:'menu'}} multiple onChange={onPodNameChange} renderValue={(selected) => (selected as string[]).join(', ')} disabled={props.disabled || props.selectedNamespaces.length===0 || getPodList().length===1}>
+                            {
+                                getPodList().map(pod => {
+                                    return (
+                                        <MenuItem key={pod.name} value={pod.name}>
+                                            <Checkbox checked={props.selectedPodNames.includes(pod.name)} />
+                                            <ListItemText primary={pod.name} />
+                                        </MenuItem>
+                                    )
+                                })
+                            }
+                        </Select>
+                    </FormControl>
                 </Grid>
                 <Grid item xs={6}>
                     <FormControl size='small' fullWidth>
-                        <Select value={props.selectedContainerNames} multiple onChange={onContainerNameChange} renderValue={(selected) => (selected as string[]).join(', ')} disabled={props.disabled || props.selectedPodNames.length===0 || getContainerList().length===1}>
+                        <Select value={props.selectedContainerNames}  MenuProps={{variant:'menu'}} multiple onChange={onContainerNameChange} renderValue={(selected) => (selected as string[]).join(', ')} disabled={props.disabled || props.selectedPodNames.length===0 || getContainerList().length===1}>
                             {
                                 getContainerList().map(container => {
                                     return (

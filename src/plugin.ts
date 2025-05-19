@@ -35,7 +35,7 @@ export const kwirthLogPlugin = createPlugin({
   routes: {
     root: rootRouteRef
   }
-});
+})
 
 export const EntityKwirthLogContent = kwirthLogPlugin.provide(
   createRoutableExtension({
@@ -44,4 +44,4 @@ export const EntityKwirthLogContent = kwirthLogPlugin.provide(
       import('./components/EntityKwirthLogContent').then(m => m.EntityKwirthLogContent),
     mountPoint: rootRouteRef
   })
-);
+)

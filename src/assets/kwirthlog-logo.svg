@@ -1,7 +1,7 @@
 <svg viewBox="0 0 152 200" xmlns="http://www.w3.org/2000/svg" xmlns:bx="https://boxy-svg.com">
   <path style="color: rgb(0, 0, 0); font-style: normal; font-variant: normal; font-weight: normal; font-stretch: normal; font-size: medium; line-height: normal; font-family: sans-serif; font-feature-settings: normal; text-indent: 0px; text-align: start; text-decoration: none solid rgb(0, 0, 0); letter-spacing: normal; word-spacing: normal; text-transform: none; writing-mode: lr-tb; direction: ltr; text-orientation: mixed; dominant-baseline: auto; baseline-shift: baseline; text-anchor: start; white-space: normal; clip-rule: nonzero; display: inline; overflow: visible; visibility: visible; opacity: 1; isolation: auto; mix-blend-mode: normal; color-interpolation: srgb; color-interpolation-filters: linearrgb; vector-effect: none; fill: rgb(255, 255, 255); fill-opacity: 1; fill-rule: evenodd; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0; stroke-opacity: 1; color-rendering: auto; image-rendering: auto; shape-rendering: auto; text-rendering: auto; paint-order: fill; stroke-width: 9px; stroke: rgb(74, 74, 74);" d="M 3.001 3.226 L 149.074 3.226 L 149.074 197.045 L 3.001 197.045 L 3.001 3.226 Z" id="path3310"></path>
-  <g id="g3330" transform="matrix(0.441209, 0, 0, 0.468545, -887.038696, -5222.522461)">
-    <g transform="matrix(6.103682, 0, 0, 5.928513, 1904.565796, 10952.352539)">
+  <g id="g3330" transform="matrix(0.417521, 0, 0, 0.461789, -838.360535, -5144.637207)" style="">
+    <g transform="matrix(6.103682, 0, 0, 5.605206, 1904.565796, 10976.322266)" style="">
       <g>
         <path d="M 68.066 63.636 L 25.648 63.636 C 25.096 63.636 24.648 63.189 24.648 62.636 C 24.648 62.083 25.096 61.636 25.648 61.636 L 68.066 61.636 C 68.619 61.636 69.066 62.083 69.066 62.636 C 69.066 63.189 68.619 63.636 68.066 63.636 Z" style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill-rule: nonzero; opacity: 1; fill: rgb(156, 156, 156);" stroke-linecap="round"></path>
         <path d="M 54.048 57.677 L 25.325 57.677 C 24.951 57.677 24.648 57.23 24.648 56.677 C 24.648 56.124 24.951 55.677 25.325 55.677 L 54.048 55.677 C 54.422 55.677 54.725 56.124 54.725 56.677 C 54.725 57.23 54.422 57.677 54.048 57.677 Z" style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill-rule: nonzero; opacity: 1; fill: rgb(156, 156, 156);" stroke-linecap="round"></path>
@@ -15,5 +15,5 @@
       </g>
     </g>
   </g>
-  <text style="fill: rgb(74, 74, 74); font-family: Consolas; font-size: 34px; font-weight: 700; stroke-miterlimit: 10; stroke-width: 0px; white-space: pre;" transform="matrix(0.654152, 0, 0, 0.636825, -54.393276, 53.200108)" x="114.293" y="147.365">KwirthLog</text>
+  <text style="fill: rgb(74, 74, 74); font-family: Consolas; font-size: 34px; font-weight: 700; stroke-miterlimit: 10; stroke-width: 0px; white-space: pre;" transform="matrix(0.654152, 0, 0, 0.636825, -53.705204, 51.365246)" x="114.293" y="147.365">KwirthLog</text>
 </svg>
