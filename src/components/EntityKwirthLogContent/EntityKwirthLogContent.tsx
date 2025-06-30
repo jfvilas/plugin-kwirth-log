@@ -23,7 +23,7 @@ import { MissingAnnotationEmptyState, useEntity } from '@backstage/plugin-catalo
 
 // kwirthlog
 import { kwirthLogApiRef } from '../../api'
-import { accessKeySerialize, LogMessage, InstanceMessageActionEnum, InstanceConfigScopeEnum, InstanceConfigViewEnum, InstanceMessage, InstanceMessageTypeEnum, SignalMessage, SignalMessageLevelEnum, InstanceConfigObjectEnum, InstanceConfig, InstanceMessageFlowEnum, InstanceMessageChannelEnum, OpsMessage, OpsCommandEnum, RouteMessage, OpsMessageResponse } from '@jfvilas/kwirth-common'
+import { accessKeySerialize, ILogMessage, InstanceMessageActionEnum, InstanceConfigScopeEnum, InstanceConfigViewEnum, InstanceMessage, InstanceMessageTypeEnum, SignalMessage, SignalMessageLevelEnum, InstanceConfigObjectEnum, InstanceConfig, InstanceMessageFlowEnum, InstanceMessageChannelEnum, IOpsMessage, OpsCommandEnum, IRouteMessage, IOpsMessageResponse } from '@jfvilas/kwirth-common'
 
 // kwirthlog components
 import { ComponentNotFound, ErrorType } from '../ComponentNotFound'
@@ -34,7 +34,7 @@ import { StatusLog } from '../StatusLog'
 
 
 // Material-UI
-import { Grid, Card, CardHeader, CardContent } from '@material-ui/core'
+import { Grid, Card, CardHeader, CardContent, Box } from '@material-ui/core'
 import Divider from '@material-ui/core/Divider'
 import IconButton from '@material-ui/core/IconButton'
 import Typography from '@material-ui/core/Typography'
@@ -133,7 +133,7 @@ export const EntityKwirthLogContent = (props:{ enableRestart: boolean }) => {
         let instanceMessage = JSON.parse(wsEvent.data) as InstanceMessage
         switch (instanceMessage.type) {
             case InstanceMessageTypeEnum.DATA:
-                let logMessage = instanceMessage as LogMessage
+                let logMessage = instanceMessage as ILogMessage
                 let bname = logMessage.namespace+'/'+logMessage.pod+'/'+logMessage.container
                 let text = logMessage.text
                 if (!buffer.current.has(bname)) buffer.current.set(bname,'')
@@ -211,7 +211,7 @@ export const EntityKwirthLogContent = (props:{ enableRestart: boolean }) => {
                 processLogMessage(wsEvent)
                 break
             case InstanceMessageChannelEnum.OPS:
-                let opsMessage = instanceMessage as OpsMessageResponse
+                let opsMessage = instanceMessage as IOpsMessageResponse
                 if (opsMessage.data?.data) 
                     addMessage (SignalMessageLevelEnum.WARNING, 'Operations message: '+opsMessage.data.data)
                 else
@@ -365,7 +365,7 @@ export const EntityKwirthLogContent = (props:{ enableRestart: boolean }) => {
 
         let pods:PodData[] = (cluster.data as PodData[]).filter(pod => selectedNamespaces.includes(pod.namespace))
         for (let pod of pods) {
-            let om:OpsMessage = {
+            let opsMessage:IOpsMessage = {
                 msgtype: 'opsmessage',
                 action: InstanceMessageActionEnum.COMMAND,
                 flow: InstanceMessageFlowEnum.IMMEDIATE,
@@ -380,7 +380,7 @@ export const EntityKwirthLogContent = (props:{ enableRestart: boolean }) => {
                 pod: pod.name,
                 container: ''
             }
-            let rm: RouteMessage = {
+            let routeMessage: IRouteMessage = {
                 msgtype: 'routemessage',
                 accessKey: accessKeySerialize(restartKey),
                 destChannel: InstanceMessageChannelEnum.OPS,
@@ -389,9 +389,9 @@ export const EntityKwirthLogContent = (props:{ enableRestart: boolean }) => {
                 type: InstanceMessageTypeEnum.SIGNAL,
                 channel: InstanceMessageChannelEnum.LOG,
                 instance: instance,
-                data: om
+                data: opsMessage
             }
-            websocket?.send(JSON.stringify(rm))
+            websocket?.send(JSON.stringify(routeMessage))
         }
     }
 
@@ -499,28 +499,30 @@ export const EntityKwirthLogContent = (props:{ enableRestart: boolean }) => {
         }
 
         { isKwirthAvailable(entity) && !loading && resources && resources.length>0 && resources.reduce((sum,cluster) => sum+cluster.data.length, 0)>0 &&
-            <Grid container direction='row' style={{height:'100%'}}>
-                <Grid container item direction='column'style={{width:'20%'}}>
-                    <Grid item>
-                        <Card>
-                            <ClusterList resources={resources} selectedClusterName={selectedClusterName} onSelect={onSelectCluster}/>
-                        </Card>
+            <Box sx={{ display: 'flex', height:'70vh'}}>
+                <Box sx={{ width: '200px'}}>
+                    <Grid container direction='column'>
+                        <Grid item>        
+                            <Card>
+                                <ClusterList resources={resources} selectedClusterName={selectedClusterName} onSelect={onSelectCluster}/>
+                            </Card>
+                        </Grid>
+                        <Grid item>
+                            <Card>
+                                <Options options={kwirthLogOptionsRef.current} onChange={onChangeLogConfig} disabled={selectedContainerNames.length === 0 || started || paused.current}/>
+                            </Card>
+                        </Grid>
                     </Grid>
-                    <Grid item>
-                        <Card>
-                            <Options options={kwirthLogOptionsRef.current} onChange={onChangeLogConfig} disabled={selectedContainerNames.length === 0 || started || paused.current}/>
-                        </Card>
-                    </Grid>
-                </Grid>
+                </Box>
 
-                <Grid item style={{width:'80%'}}>
+                <Box sx={{ flexGrow: 1, flex:1, overflow:'hidden', p:1, maxWidth:'85%' }}>
 
                     { !selectedClusterName && 
                         <img src={KwirthLogLogo} alt='No cluster selected' style={{ left:'40%', marginTop:'10%', width:'20%', position:'relative' }} />
                     }
 
                     { selectedClusterName && <>
-                        <Card style={{ maxHeight:'75vh'}}>
+                        <Card style={{ marginTop:-8, height:'100%', display:'flex', flexDirection:'column' }}>
                             <CardHeader
                                 title={statusButtons(selectedClusterName)}
                                 style={{marginTop:-4, marginBottom:4, flexShrink:0}}
@@ -531,17 +533,27 @@ export const EntityKwirthLogContent = (props:{ enableRestart: boolean }) => {
                                 <ObjectSelector cluster={resources.find(cluster => cluster.name === selectedClusterName)!} onSelect={onSelectObject} disabled={selectedClusterName === '' || started || paused.current} selectedNamespaces={selectedNamespaces} selectedPodNames={selectedPodNames} selectedContainerNames={selectedContainerNames}/>
                             </Typography>
                             <Divider/>
-                            <CardContent style={{ overflow: 'auto' }}>
-                                <pre ref={preRef}>
-                                    { messages.map (m => formatMessage(m)) }
-                                </pre>
-                                <span ref={lastRef}></span>
+                            {/* <CardContent>
+                                <Box style={{ display:'flex', flexDirection:'column', overflowY:'auto', overflowX:'auto', width:'100%', flexGrow:1, height:'55vh'}}> */}
+                            <CardContent style={{ flexGrow: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                                <Box style={{ overflowY: 'auto', overflowX: 'auto', width: '100%', flexGrow: 1 }}>
+
+                                    <pre ref={preRef}>
+                                        { messages.map (m => formatMessage(m)) }
+                                    </pre>
+                                    <span ref={lastRef}/>
+                                </Box>                                
+                                {/* <Box style={{ overflowY: 'auto', overflowX:'auto', whiteSpace: 'nowrap', maxHeight:'60vh' }}>
+                                    <pre ref={preRef}>
+                                        { messages.map (m => formatMessage(m)) }
+                                    </pre>
+                                    <span ref={lastRef}></span>
+                                </Box> */}
                             </CardContent>
                         </Card>
                     </>}
-
-                </Grid>
-            </Grid>
+                </Box>
+            </Box>
         }
         { showStatusDialog && <StatusLog level={statusLevel} onClose={() => setShowStatusDialog(false)} statusMessages={statusMessages} onClear={statusClear}/>}
     </>)
