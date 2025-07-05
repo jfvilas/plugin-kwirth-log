@@ -125,7 +125,7 @@ const ObjectSelector = (props: IProps) => {
                 </Grid>
                 <Grid item xs={6}>
                     <FormControl size='small' fullWidth>
-                        <Select value={props.selectedContainerNames}  MenuProps={{variant:'menu'}} multiple onChange={onContainerNameChange} renderValue={(selected) => (selected as string[]).join(', ')} disabled={props.disabled || props.selectedPodNames.length===0 || getContainerList().length===1}>
+                        <Select value={props.selectedContainerNames} MenuProps={{variant:'menu'}} multiple onChange={onContainerNameChange} renderValue={(selected) => (selected as string[]).join(', ')} disabled={props.disabled || props.selectedPodNames.length===0 || getContainerList().length===1}>
                             {
                                 getContainerList().map(container => {
                                     return (

@@ -17,7 +17,7 @@ import React, { useRef, useState } from 'react'
 import useAsync from 'react-use/esm/useAsync'
 
 import { Progress, WarningPanel } from '@backstage/core-components'
-import { useApi } from '@backstage/core-plugin-api'
+import { alertApiRef, useApi } from '@backstage/core-plugin-api'
 import { ANNOTATION_KWIRTH_LOCATION, isKwirthAvailable, ClusterValidPods, PodData, ILogLine, IStatusLine } from '@jfvilas/plugin-kwirth-common'
 import { MissingAnnotationEmptyState, useEntity } from '@backstage/plugin-catalog-react'
 
@@ -34,7 +34,7 @@ import { StatusLog } from '../StatusLog'
 
 
 // Material-UI
-import { Grid, Card, CardHeader, CardContent, Box } from '@material-ui/core'
+import { Grid, Card, CardHeader, CardContent, Box, Button } from '@material-ui/core'
 import Divider from '@material-ui/core/Divider'
 import IconButton from '@material-ui/core/IconButton'
 import Typography from '@material-ui/core/Typography'
@@ -55,6 +55,7 @@ const LOG_MAX_MESSAGES=1000
 export const EntityKwirthLogContent = (props:{ enableRestart: boolean }) => { 
     const { entity } = useEntity()
     const kwirthLogApi = useApi(kwirthLogApiRef)
+    const alertApi = useApi(alertApiRef)
     const [resources, setResources] = useState<ClusterValidPods[]>([])
     const [selectedClusterName, setSelectedClusterName] = useState('')
     const [selectedNamespaces, setSelectedNamespaces] = useState<string[]>([])
@@ -174,15 +175,35 @@ export const EntityKwirthLogContent = (props:{ enableRestart: boolean }) => {
                 break
             case InstanceMessageTypeEnum.SIGNAL:
                 if (instanceMessage.flow === InstanceMessageFlowEnum.RESPONSE && instanceMessage.action === InstanceMessageActionEnum.START) {
-                    setInstance(instanceMessage.instance)
+                    if (instanceMessage.instance!=='')
+                        setInstance(instanceMessage.instance)
+                    else {
+                        let signalMessage = instanceMessage as SignalMessage
+                        alertApi.post({ message: signalMessage.text, severity:'error', display:'transient' })
+                    }
                 }
                 else {
                     let signalMessage = instanceMessage as SignalMessage
                     addMessage(signalMessage.level, signalMessage.text)
+                    switch(signalMessage.level) {
+                        case SignalMessageLevelEnum.INFO:
+                            alertApi.post({ message: signalMessage.text, severity:'info', display:'transient' })
+                            break
+                        case SignalMessageLevelEnum.WARNING:
+                            alertApi.post({ message: signalMessage.text, severity:'warning', display:'transient' })
+                            break
+                        case SignalMessageLevelEnum.ERROR:
+                            alertApi.post({ message: signalMessage.text, severity:'error', display:'transient' })
+                            break
+                        default:
+                            alertApi.post({ message: signalMessage.text, severity:'success', display:'transient' })
+                            break
+                    }
                 }
                 break
             default:
                 addMessage(SignalMessageLevelEnum.ERROR, 'Invalid message type received: ' + instanceMessage.type)
+                alertApi.post({ message: 'Invalid message type received: ' + instanceMessage.type, severity:'error', display:'transient' })
                 break
         }
     }
