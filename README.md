@@ -1,9 +1,12 @@
 # Backstage frontend KwirthLog plugin
-This package is a Backstage plugin for **viewing Kubernetes logs** in real-time (live-streaming) via Kwirth.
+This package is a Backstage frontend plugin for **viewing Kubernetes logs** in real-time (live-streaming) via Kwirth.
 
-**NOTE: KwithLog requires Kwirth vesrsion 0.3.155 or greater**
+**NOTE: KwithLog requires Kwirth vesrsion 0.3.160 or greater**
 
-This Backstage plugin allows you to live-stream Kubernetes logs associated to your Backstage entities directly inside your Backstage instance. It's very important to understand that for this plugin to work you need to install Kwirth on your Kubernetes cluster, that is, this plugin is just another front end for [Kwirth](https://jfvilas.github.io/kwirth).
+This Backstage plugin allows you to live-stream Kubernetes logs associated to your Backstage entities directly inside your Backstage instance. It's very important to understand that for this plugin to work...:
+
+  - You need to install the Kwirth [Backstage backend plugin](https://www.npmjs.com/package/@jfvilas/plugin-kwirth-backend).
+  - You need to install Kwirth on your Kubernetes cluster, that is, this plugin is just another frontend for [Kwirth](https://jfvilas.github.io/kwirth).
 
 Kwirth is a really-easy-to-use data-exporting system for Kubernetes that runs in only one pod (*no database is needed*). Refer to Kwirth GitHub project for [info on installation](https://github.com/jfvilas/kwirth?tab=readme-ov-file#installation). Kwirth installation is *one command away* from you.
 
@@ -11,7 +14,7 @@ You can access [Kwirth project here](https://github.com/jfvilas/kwirth).
 
 
 ## What is this plugin for?
-This Backstage plugin adds Backstage a feature for viewing real-time Kubernetes logs of your Backstage entities directly inside Backstage frontend application. The plugin will be enabled for any entity that is corectly tagged (according to Backstage Kubernetes core feature) and its correpsonding Kubernetes resources are found on any of the clusters that have been added to Backstage.
+This Backstage plugin adds Backstage a feature for viewing real-time Kubernetes logs of your Backstage entities directly inside Backstage frontend application. The plugin will be enabled for any entity that is correctly tagged (according to Backstage Kubernetes core feature) and its correpsonding Kubernetes resources are found on any of the clusters that have been added to Backstage.
 
 When KwirthLog is correctly installed and configured, it is possible to view Kubernetes logs on your Backstage like in this sample:
 
@@ -31,6 +34,16 @@ Let's explain this by following a user working sequence:
 7. With all this information, the backend builds a unique response containing all the pods the user have access to, and all the API keys needed to access those logs.
 
 If everyting is correctly configured and tagged, the user should see a list of clusters. When selecting a cluster, the user should see a list of namespaces where the entity is running.
+
+
+## Version compatibility
+Following table shows version compatibility between this Kwirth Backstage plugin and Kwirth Core server.
+
+| Plugin Kwirth version | Kwirth version |
+|-|-|
+|0.0.1|0.2.8|
+|0.0.2|0.3.155|
+|0.0.3|0.4.20|
 
 
 ## Installation
