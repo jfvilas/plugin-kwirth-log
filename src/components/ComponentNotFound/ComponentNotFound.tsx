@@ -18,7 +18,7 @@ import { Entity } from '@backstage/catalog-model'
 import { CodeSnippet } from '@backstage/core-components'
 import { Button, Grid, Typography } from '@material-ui/core'
 import KwirthComponentNotFound from '../../assets/kwirth-log-component-not-found.svg'
-import { ANNOTATION_KWIRTH_LOCATION } from '@jfvilas/plugin-kwirth-common'
+import { ANNOTATION_BACKSTAGE_KUBERNETES_LABELID, ANNOTATION_BACKSTAGE_KUBERNETES_LABELSELECTOR } from '@jfvilas/plugin-kwirth-common'
 
 enum ErrorType {
   NO_PODS,
@@ -31,7 +31,9 @@ metadata:
   name: '$entityName'
   description: '$entityDescription'
   labels:
-    ${ANNOTATION_KWIRTH_LOCATION}: '$entityName'
+    ${ANNOTATION_BACKSTAGE_KUBERNETES_LABELID}: '$entityName'
+    # Or just don't add this label and use Backstage label selector this way:
+    # ${ANNOTATION_BACKSTAGE_KUBERNETES_LABELSELECTOR}: app=$entityName
 spec:
   selector:
     matchLabels:
@@ -41,7 +43,9 @@ spec:
       name: '$entityName'-pod
       labels:
         app: '$entityName'
-        ${ANNOTATION_KWIRTH_LOCATION}: '$entityName'
+        ${ANNOTATION_BACKSTAGE_KUBERNETES_LABELID}: '$entityName'
+        # Or just don't add this label and use Backstage label selector this way:
+        # ${ANNOTATION_BACKSTAGE_KUBERNETES_LABELSELECTOR}: app=$entityName
     spec:
       containers:
         - name: '$entityName'

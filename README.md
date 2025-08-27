@@ -41,7 +41,7 @@ Following table shows version compatibility between this Kwirth Backstage plugin
 
 | Plugin Kwirth version | Kwirth version |
 |-|-|
-|0.11.3|0.3.155|
+|0.11.3|0.3.160|
 |0.12.5|0.4.20|
 
 
@@ -162,7 +162,7 @@ When the log stream starts, and all along the life of the stream (until it gets 
 The icons will light up in its corresponding color when a new message arrives.
 
 This is how it feels:
-![status info](https://raw.githubusercontent.com/jfvilas/plugin-kwirth-log/master/images/status-info.png)
+![status info](https://raw.githubusercontent.com/jfvilas/plugin-kwirth-log/master/images/kwirthlog-status-info.png)
 
 If you click on one of the status icons when theyr are enableds (coloured), you will see the detail of the status.
-![status detail](https://raw.githubusercontent.com/jfvilas/plugin-kwirth-log/master/images/status-detail.png)
+![status detail](https://raw.githubusercontent.com/jfvilas/plugin-kwirth-log/master/images/kwirthlog-status-detail.png)

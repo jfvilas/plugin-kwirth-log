@@ -18,7 +18,7 @@ import useAsync from 'react-use/esm/useAsync'
 
 import { Progress, WarningPanel } from '@backstage/core-components'
 import { alertApiRef, useApi } from '@backstage/core-plugin-api'
-import { ANNOTATION_KWIRTH_LOCATION, isKwirthAvailable, ClusterValidPods, PodData, ILogLine, IStatusLine } from '@jfvilas/plugin-kwirth-common'
+import { ANNOTATION_BACKSTAGE_KUBERNETES_LABELID, ANNOTATION_BACKSTAGE_KUBERNETES_LABELSELECTOR, isKwirthAvailable, ClusterValidPods, PodData, ILogLine, IStatusLine } from '@jfvilas/plugin-kwirth-common'
 import { MissingAnnotationEmptyState, useEntity } from '@backstage/plugin-catalog-react'
 
 // kwirthlog
@@ -508,7 +508,7 @@ export const EntityKwirthLogContent = (props:{ enableRestart: boolean }) => {
         )}
 
         {!isKwirthAvailable(entity) && !loading && (
-            <MissingAnnotationEmptyState readMoreUrl='https://github.com/jfvilas/plugin-kwirth-log' annotation={ANNOTATION_KWIRTH_LOCATION}/>
+            <MissingAnnotationEmptyState readMoreUrl='https://github.com/jfvilas/plugin-kwirth-log' annotation={[ANNOTATION_BACKSTAGE_KUBERNETES_LABELID, ANNOTATION_BACKSTAGE_KUBERNETES_LABELSELECTOR]}/>
         )}
 
         { isKwirthAvailable(entity) && !loading && resources && resources.length===0 &&

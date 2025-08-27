@@ -16,7 +16,7 @@ limitations under the License.
 import { DiscoveryApi, FetchApi } from '@backstage/core-plugin-api'
 import { KwirthLogApi } from './types'
 import { Entity } from '@backstage/catalog-model'
-import { ClusterValidPods, getVersion, requestAccess } from '@jfvilas/plugin-kwirth-common'
+import { ClusterValidPods, getResources, getVersion, requestAccess } from '@jfvilas/plugin-kwirth-common'
 import { InstanceConfigScopeEnum } from '@jfvilas/kwirth-common'
 
 export interface KwirthLogClientOptions {
@@ -60,23 +60,27 @@ export class KwirthLogClient implements KwirthLogApi {
     //     }
     // }
 
+    // move to common
+    // async getResources(entity:Entity): Promise<ClusterValidPods> {
+    //     try {
+    //         const baseUrl = await this.discoveryApi.getBaseUrl('kwirth')
+    //         const targetUrl = `${baseUrl}/start`
+
+    //         var payload=JSON.stringify(entity)
+    //         const result = await this.fetchApi.fetch(targetUrl, {method:'POST', body:payload, headers:{'Content-Type':'application/json'}})
+    //         const data = await result.json() as ClusterValidPods
+
+    //         if (!result.ok) {
+    //             throw new Error(`getResources error: not ok`)
+    //         }
+    //         return data
+    //     }
+    //     catch (err) {
+    //         throw new Error(`getResources error: ${err}`)
+    //     }
+    // }
     async getResources(entity:Entity): Promise<ClusterValidPods> {
-        try {
-            const baseUrl = await this.discoveryApi.getBaseUrl('kwirth')
-            const targetUrl = `${baseUrl}/start`
-
-            var payload=JSON.stringify(entity)
-            const result = await this.fetchApi.fetch(targetUrl, {method:'POST', body:payload, headers:{'Content-Type':'application/json'}})
-            const data = await result.json() as ClusterValidPods
-
-            if (!result.ok) {
-                throw new Error(`getResources error: not ok`)
-            }
-            return data
-        }
-        catch (err) {
-            throw new Error(`getResources error: ${err}`)
-        }
+        return getResources(this.discoveryApi, this.fetchApi, entity)
     }
 
     async requestAccess(entity:Entity, channel:string, scopes:InstanceConfigScopeEnum[]): Promise<ClusterValidPods[]> {
