@@ -28,7 +28,9 @@ Let's explain this by following a user working sequence:
 1. A Backstage user searchs for an entity in the Backstage.
 2. In the entity page there will be a new tab named 'KWIRTHLOG'.
 3. When the user clicks on KWIRTHLOG the frontend plugin sends a request to the backend Kiwrth plugin asking for logging information on all Kubernetes clusters available.
-4. The Kwirth backend plugin sends requests to the Kwirth instances that are running inside all the clusters added to Backstage. These requests ask for the following: *'Tell me all the pods that are labeled with the kubernetes-id label and do correspond with the entity I'm looking for'*. In response to this query, each Kwirth instance answers with a list of pods and the namespaces where they are running.
+4. Next step is to identify the Kubernetes objects that match requested entity. As well as it occurs with other Backstage Kwirth plugins, Kwirth implements two strategies for getting the listo of kubernetes objects that match:
+  - Option 1. Your catalog-info contains an annotation of this type: **backstage.io/kubernetes-id**. In this case, the Backstage Kwirth backend plugin sends requests to the Kwirth instances that are running inside all the clusters added to Backstage. These requests ask for the following: *'Tell me all the pods that are labeled with the kubernetes-id label and do correspond with the entity I'm looking for'*. In response to this query, each Kwirth instance answers with a list of pods and the namespaces where they are running.
+  - Option 2. Your catalog-info contains an annotation of this type: **backstage.io/kubernetes-label-selector**. In this case, the Backstage Kwirth backend plugin sends requests to the Kwirth instances that are running inside all the clusters added to Backstage. These requests ask for the following: *'Tell me all the pods whose labels match with the kubernetes-label-selector label selector*. In response to this query, each Kwirth instance answers with a list of pods and the namespaces where they are running.
 5. The Kwirth backend plugin checks then the permissions of the connected user and prunes the pods list removing the ones that the user has not access to.
 6. With the final pod list, the backend plugin sends requests to the Kwirth instances on the clusters asking for API Keys specific for streaming pod logs.
 7. With all this information, the backend builds a unique response containing all the pods the user have access to, and all the API keys needed to access those logs.
@@ -41,8 +43,9 @@ Following table shows version compatibility between this Kwirth Backstage plugin
 
 | Plugin Kwirth version | Kwirth version |
 |-|-|
-|0.11.3|0.3.160|
+|0.12.8|0.4.45|
 |0.12.5|0.4.20|
+|0.11.3|0.3.160|
 
 
 ## Installation
@@ -87,15 +90,30 @@ For Kwirth plugin to be usable on the frontend, you must tailor your Entity Page
     )
     ```
 
-2. Add `backstage.io/kubernetes-id` annotation to your `catalog-info.yaml` for the entities deployed to Kubernetes whose logs you want to be 'viewable' on Backstage. This is the same annotation that the Kubernetes core plugin uses, so, maybe you already have added it to your components.
+2. Label your catalog-info according to one of these two startegies:
+
+- **Strategy 1: one-to-one**. Add `backstage.io/kubernetes-id` annotation to your `catalog-info.yaml` for the entities deployed to Kubernetes you want to work with on Backstage. This is the same annotation that the Kubernetes core plugin uses, so, maybe you already have added it to your components. Exmaple:
 
     ```yaml
     metadata:
       annotaations:
-        backstage.io/kubernetes-id: entity-name
+        backstage.io/kubernetes-id: entity001
     ```
 
-3. Add proper **labels** to your Kubernetes objects so Backstage can *link* forward and backward the Backstage entities with the Kubernetes objects. To do this, you need to add `labels` to your Kubernetes YAML objects (please, don't get confused: **annotations in Backstage YAML, labels in Kubernetes YAML**). This is an example of a typical Kubernetes deployment with the required label:
+- **Strategy 2: use selectors**. Add `backstage.io/kubernetes-label-selector` annotation to your `catalog-info.yaml` for the entities you want to work with. This is the same annotation that the Kubernetes core plugin uses, so, maybe you already have added it to your components. The label selector value follows Kubernetes [label selector semantics](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/). Example:
+
+    ```yaml
+    metadata:
+      annotaations:
+        backstage.io/kubernetes-id: 'app=core,artifact=backend'
+    ```
+
+3. Add proper **labels** to your Kubernetes objects so Backstage can *link* forward and backward the Backstage entities with the Kubernetes objects. To do this, you need to add `labels` to your Kubernetes YAML objects (please, don't get confused: **annotations in Backstage YAML, labels in Kubernetes YAML**).
+
+- ***VERY IMPORTANT NOTE:*** If you opted for using label selectors **you have nothing new to add to your pods**.
+
+- If you use labels (no label selectors), please note that the kubernetes-id label is **on the deployment** and on the **spec pod template** also. This is an example of a typical Kubernetes deployment with the required label:
+
 
     ```yaml
     apiVersion: apps/v1
@@ -120,8 +138,6 @@ For Kwirth plugin to be usable on the frontend, you must tailor your Entity Page
               image: your-OCI-image
         ...    
     ```
-
-    Please note that the kubernetes-id label is **on the deployment** and on the **spec pod template** also.
 
 ## Ready, set, go!
 If you followed all these steps and our work is well done (not sure on this), you would see a 'KwirthLog' tab in your **Entity Page**, like this one:
