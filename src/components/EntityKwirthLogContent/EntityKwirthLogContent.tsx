@@ -451,10 +451,14 @@ export const EntityKwirthLogContent = (props:{ enableRestart: boolean }) => {
             setStatusLevel(level)
         }
 
+        const prepareText = (txt:string|undefined) => {
+            return txt? (txt.length>25? txt.substring(0,25)+"...":txt) : 'N/A'
+        }
+
         return (
             <Grid container direction='row' >
                 <Grid item>
-                    <Typography variant='h5'>{title}</Typography>
+                    <Typography variant='h5'>{prepareText(title)}</Typography>
                 </Grid>
                 <Grid item style={{marginTop:'-8px'}}>
                     <IconButton title="info" disabled={!statusMessages.some(m=>m.type === InstanceMessageTypeEnum.SIGNAL && m.level=== SignalMessageLevelEnum.INFO)} onClick={() => show(SignalMessageLevelEnum.INFO)}>
@@ -521,7 +525,7 @@ export const EntityKwirthLogContent = (props:{ enableRestart: boolean }) => {
 
         { isKwirthAvailable(entity) && !loading && resources && resources.length>0 && resources.reduce((sum,cluster) => sum+cluster.data.length, 0)>0 &&
             <Box sx={{ display: 'flex', height:'70vh'}}>
-                <Box sx={{ width: '200px'}}>
+                <Box sx={{ width: '200px', maxWidth:'200px'}}>
                     <Grid container direction='column'>
                         <Grid item>        
                             <Card>
@@ -536,7 +540,7 @@ export const EntityKwirthLogContent = (props:{ enableRestart: boolean }) => {
                     </Grid>
                 </Box>
 
-                <Box sx={{ flexGrow: 1, flex:1, overflow:'hidden', p:1, maxWidth:'85%' }}>
+                <Box sx={{ flexGrow: 1, flex:1, overflow:'hidden', p:1, marginLeft:'8px' }}>
 
                     { !selectedClusterName && 
                         <img src={KwirthLogLogo} alt='No cluster selected' style={{ left:'40%', marginTop:'10%', width:'20%', position:'relative' }} />
@@ -554,8 +558,6 @@ export const EntityKwirthLogContent = (props:{ enableRestart: boolean }) => {
                                 <ObjectSelector cluster={resources.find(cluster => cluster.name === selectedClusterName)!} onSelect={onSelectObject} disabled={selectedClusterName === '' || started || paused.current} selectedNamespaces={selectedNamespaces} selectedPodNames={selectedPodNames} selectedContainerNames={selectedContainerNames}/>
                             </Typography>
                             <Divider/>
-                            {/* <CardContent>
-                                <Box style={{ display:'flex', flexDirection:'column', overflowY:'auto', overflowX:'auto', width:'100%', flexGrow:1, height:'55vh'}}> */}
                             <CardContent style={{ flexGrow: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                                 <Box style={{ overflowY: 'auto', overflowX: 'auto', width: '100%', flexGrow: 1 }}>
 
@@ -564,12 +566,6 @@ export const EntityKwirthLogContent = (props:{ enableRestart: boolean }) => {
                                     </pre>
                                     <span ref={lastRef}/>
                                 </Box>                                
-                                {/* <Box style={{ overflowY: 'auto', overflowX:'auto', whiteSpace: 'nowrap', maxHeight:'60vh' }}>
-                                    <pre ref={preRef}>
-                                        { messages.map (m => formatMessage(m)) }
-                                    </pre>
-                                    <span ref={lastRef}></span>
-                                </Box> */}
                             </CardContent>
                         </Card>
                     </>}

@@ -26,6 +26,10 @@ const ClusterList = (props: IProps) => {
     const classes=useStyles();
     const { resources, selectedClusterName, onSelect } = props;
   
+	const prepareText = (txt:string|undefined) => {
+		return txt? (txt.length>25? txt.substring(0,25)+"...":txt) : 'N/A'
+	}
+
 	return (
 		<>
 		<CardHeader title={'Clusters'}/>
@@ -36,13 +40,13 @@ const ClusterList = (props: IProps) => {
 			{resources.map((cluster, index) => (
 			<ListItem button key={index} selected={selectedClusterName === cluster.name} onClick={() => onSelect(cluster.name)} disabled={cluster.data.length===0}>
 				<ListItemText
-				primary={cluster.name}
-				secondary={
-					<Box component={'span'} className={classes.clusterBox}>
-					<Typography component={'span'} style={{fontSize:12}}>
-						{cluster.title}
-					</Typography>
-					</Box>
+					primary={prepareText(cluster.name)}
+					secondary={
+						<Box component={'span'} className={classes.clusterBox}>
+							<Typography component={'span'} style={{fontSize:12}}>
+								{prepareText(cluster.title)}
+							</Typography>
+						</Box>
 				}
 				/>
 			</ListItem>
