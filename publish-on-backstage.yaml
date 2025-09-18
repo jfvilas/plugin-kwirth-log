@@ -2,9 +2,9 @@
 title: Kwirth Log for Backstage
 author: Julio Fernandez
 authorUrl: https://github.com/jfvilas
-category: Observability
-description: Kwirth Log provides your Backstage users the ability to view logs of your Kubernetes objects linked to Backstage entities. Security controls can be applied.
-documentation: https://github.com/jfvilas/kwirthbackstage-log
+category: Monitoring
+description: With KwirthLog you can view real-time log streams of Kubernetes objects linked to Backstage entities (source entities can be grouped and merged)
+documentation: https://github.com/jfvilas/plugin-kwirth-log
 iconUrl: https://raw.githubusercontent.com/jfvilas/kwirthbackstage-log/refs/heads/master/src/assets/kwirthlog-logo.png
-npmPackageName: '@jfvilas/plugin-kwirthbackstage-log'
-addedDate: 2025-04-14
+npmPackageName: '@jfvilas/plugin-kwirth-log'
+addedDate: '2025-09-18'
