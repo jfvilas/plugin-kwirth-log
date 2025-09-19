@@ -22,6 +22,7 @@ export interface KwirthLogApi {
     getResources(entity:Entity): Promise<any>
     requestAccess(entity:Entity, channel:string, scopes:InstanceConfigScopeEnum[]): Promise<ClusterValidPods[]>
     getVersion(): Promise<any>
+    getInfo(): any
 }
 
 export const kwirthLogApiRef = createApiRef<KwirthLogApi>({

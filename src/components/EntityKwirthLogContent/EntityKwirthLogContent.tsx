@@ -34,7 +34,7 @@ import { StatusLog } from '../StatusLog'
 
 
 // Material-UI
-import { Grid, Card, CardHeader, CardContent, Box, Button } from '@material-ui/core'
+import { Grid, Card, CardHeader, CardContent, Box } from '@material-ui/core'
 import Divider from '@material-ui/core/Divider'
 import IconButton from '@material-ui/core/IconButton'
 import Typography from '@material-ui/core/Typography'
@@ -49,6 +49,7 @@ import ErrorIcon from '@material-ui/icons/Error'
 import DownloadIcon from '@material-ui/icons/CloudDownload'
 import KwirthLogLogo from '../../assets/kwirthlog-logo.svg'
 import RefreshIcon from '@material-ui/icons/Refresh'
+import { KwirthNews } from '../KwirthNews/KwirthNews'
 
 const LOG_MAX_MESSAGES=1000
 
@@ -75,15 +76,16 @@ export const EntityKwirthLogContent = (props:{ enableRestart: boolean }) => {
     const preRef = useRef<HTMLPreElement|null>(null)
     const lastRef = useRef<HTMLPreElement|null>(null)
     const [ backendVersion, setBackendVersion ] = useState<string>('')
+    const [ backendInfo, setBackendInfo ] = useState<any>(undefined)
     const { loading, error } = useAsync ( async () => {
         if (backendVersion==='') setBackendVersion(await kwirthLogApi.getVersion())
+        if (!backendInfo) setBackendInfo(await kwirthLogApi.getInfo())
         let reqScopes = [InstanceConfigScopeEnum.VIEW]
         if (props.enableRestart) reqScopes.push(InstanceConfigScopeEnum.RESTART)
         let data:ClusterValidPods[] = await kwirthLogApi.requestAccess(entity, InstanceMessageChannelEnum.LOG, reqScopes)
         setResources(data)
     })
     const buffer = useRef<Map<string,string>>(new Map())
-
 
     const clickStart = (options:any) => {
         if (!paused.current) {
@@ -535,6 +537,11 @@ export const EntityKwirthLogContent = (props:{ enableRestart: boolean }) => {
                         <Grid item>
                             <Card>
                                 <Options options={kwirthLogOptionsRef.current} onChange={onChangeLogConfig} disabled={selectedContainerNames.length === 0 || started || paused.current}/>
+                            </Card>
+                        </Grid>
+                        <Grid item>
+                            <Card>
+                                <KwirthNews latestVersions={backendInfo} backendVersion={backendVersion}/>
                             </Card>
                         </Grid>
                     </Grid>

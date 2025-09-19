@@ -16,7 +16,7 @@ limitations under the License.
 import { DiscoveryApi, FetchApi } from '@backstage/core-plugin-api'
 import { KwirthLogApi } from './types'
 import { Entity } from '@backstage/catalog-model'
-import { ClusterValidPods, getResources, getVersion, requestAccess } from '@jfvilas/plugin-kwirth-common'
+import { ClusterValidPods, getInfo, getResources, getVersion, requestAccess } from '@jfvilas/plugin-kwirth-common'
 import { InstanceConfigScopeEnum } from '@jfvilas/kwirth-common'
 
 export interface KwirthLogClientOptions {
@@ -38,47 +38,14 @@ export class KwirthLogClient implements KwirthLogApi {
      * @param entity 
      * @returns an array of clusters (with their correpsonding info) and a pod list for each, where the entity has been dicovered
      */
-    // +++ test
     async getVersion() : Promise<string> {
         return getVersion(this.discoveryApi, this.fetchApi)
     }
-    // async getVersion(): Promise<string> {
-    //     try {
-    //         const baseUrl = await this.discoveryApi.getBaseUrl('kwirth')
-    //         const targetUrl = `${baseUrl}/version`
 
-    //         const result = await this.fetchApi.fetch(targetUrl)
-    //         const data = await result.json()
+    async getInfo() : Promise<string> {
+        return getInfo(this.discoveryApi, this.fetchApi)
+    }
 
-    //         if (!result.ok) {
-    //             throw new Error(`getVersion error: not ok`)
-    //         }
-    //         return data.version
-    //     }
-    //     catch (err) {
-    //         throw new Error(`getVersion error: ${err}`)
-    //     }
-    // }
-
-    // move to common
-    // async getResources(entity:Entity): Promise<ClusterValidPods> {
-    //     try {
-    //         const baseUrl = await this.discoveryApi.getBaseUrl('kwirth')
-    //         const targetUrl = `${baseUrl}/start`
-
-    //         var payload=JSON.stringify(entity)
-    //         const result = await this.fetchApi.fetch(targetUrl, {method:'POST', body:payload, headers:{'Content-Type':'application/json'}})
-    //         const data = await result.json() as ClusterValidPods
-
-    //         if (!result.ok) {
-    //             throw new Error(`getResources error: not ok`)
-    //         }
-    //         return data
-    //     }
-    //     catch (err) {
-    //         throw new Error(`getResources error: ${err}`)
-    //     }
-    // }
     async getResources(entity:Entity): Promise<ClusterValidPods> {
         return getResources(this.discoveryApi, this.fetchApi, entity)
     }
@@ -86,30 +53,5 @@ export class KwirthLogClient implements KwirthLogApi {
     async requestAccess(entity:Entity, channel:string, scopes:InstanceConfigScopeEnum[]): Promise<ClusterValidPods[]> {
         return requestAccess(this.discoveryApi, this.fetchApi, entity, channel, scopes)
     }
-
-    // async requestAccess(entity:Entity, channel:string, scopes:InstanceConfigScopeEnum[]): Promise<ClusterValidPods[]> {
-    //     try {
-    //         const baseUrl = await this.discoveryApi.getBaseUrl('kwirth')
-    //         var targetUrl:URL= new URL (`${baseUrl}/access`)
-    //         targetUrl.searchParams.append('scopes',scopes.join(','))
-    //         targetUrl.searchParams.append('channel',channel)
-
-    //         var payload=JSON.stringify(entity)
-    //         const result = await this.fetchApi.fetch(targetUrl, {method:'POST', body:payload, headers:{'Content-Type':'application/json'}})
-    //         const data = await result.json() as ClusterValidPods[]
-
-    //         // we reconstruct the 'Map' from string of arrays
-    //         for (var c of data) {
-    //             c.accessKeys = new Map(JSON.parse(((c as any).accessKeys)))
-    //         }
-    //         if (!result.ok) {
-    //             throw new Error(`requestAccess error: not ok`)
-    //         }
-    //         return data
-    //     }
-    //     catch (err) {
-    //         throw new Error(`requestAccess error: ${err}`)
-    //     }
-    // }
 
 }

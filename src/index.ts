@@ -1,4 +1,6 @@
-export { EntityKwirthLogContent, kwirthLogPlugin } from './plugin';
-export { KwirthLogClient, kwirthLogApiRef  } from './api';
+export const VERSION='0.12.9'
 
-export type { KwirthLogApi, KwirthLogClientOptions } from './api';
+export { EntityKwirthLogContent, kwirthLogPlugin } from './plugin'
+export { KwirthLogClient, kwirthLogApiRef  } from './api'
+
+export type { KwirthLogApi, KwirthLogClientOptions } from './api'
