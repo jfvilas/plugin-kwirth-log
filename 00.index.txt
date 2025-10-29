@@ -1,0 +1,20 @@
+Default Namespace Selection
+In our setup, each service has its own namespace, so manually selecting it doesn’t add much value.
+7**It would be great if the plugin could automatically select the appropriate namespace by default.
+
+Default Pod Selection
+Most of the time, developers want to view logs for all pods of a service.
+5**Selecting all pods by default (while still allowing filtering if needed) would simplify the experience.
+Ideally, pod names wouldn’t need to be visible unless specifically required.
+
+Default Container Selection
+Each pod has two containers: application and istio-proxy.
+5**It would be very helpful if the plugin automatically filtered out istio-proxy logs by default, showing only the main application container logs.
+
+Log Viewer Options (Default Settings)
+**3**Let us choose which options to be enabled by default. The current defaults aren’t very useful in our workflow.
+**2**Add a “Wrap lines” option, long log lines make readability difficult, so line wrapping would be a big improvement.
+1**Add a “Show pod names” option, to see pod names if needed.
+
+Search / Filter Bar
+**4**A simple search bar to filter logs by keywords (e.g., error, fail, etc.) would make troubleshooting much faster and more efficient.

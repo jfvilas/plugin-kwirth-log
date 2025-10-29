@@ -5,20 +5,21 @@ import Divider from '@material-ui/core/Divider'
 import FormControlLabel from '@material-ui/core/FormControlLabel'
 import Grid from '@material-ui/core/Grid'
 import { Typography } from '@material-ui/core'
+import { IOptions } from './IOptions'
 
 interface IProps {
-    options: any,
+    options: IOptions,
     disabled: boolean,
-    onChange: (options:{}) => void
+    onChange: (options:IOptions) => void
 }
 
 const Options = (props: IProps) => {
-    const [options, setOptions] = useState<any>(props.options);
+    const [options, setOptions] = useState<IOptions>(props.options);
 
     const handleChange = (change:any) => {
         var a = {...options,...change}
-        setOptions(a);
-        props.onChange(a);
+        setOptions(a)
+        props.onChange(a)
     }
 
     return (<>
@@ -29,10 +30,16 @@ const Options = (props: IProps) => {
                 <FormControlLabel style={{marginLeft:8}} label="From start" control={<Checkbox checked={options.fromStart} onChange={() => handleChange({fromStart:!options.fromStart})} disabled={props.disabled}/>} />
             </Grid>
             <Grid item >
-                <FormControlLabel style={{marginLeft:8}} label="Add timestamp" control={<Checkbox checked={options.timestamp} onChange={() => handleChange({timestamp:!options.timestamp})} disabled={props.disabled}/>} />
+                <FormControlLabel style={{marginLeft:8}} label="Show timestamp" control={<Checkbox checked={options.showTimestamp} onChange={() => handleChange({showTimestamp:!options.showTimestamp})} disabled={props.disabled}/>} />
             </Grid>
             <Grid item >
-                <FormControlLabel style={{marginLeft:8}} control={<Checkbox checked={options.follow} onChange={() => handleChange({follow:!options.follow})} />} label="Follow log" disabled={props.disabled}/>
+                <FormControlLabel style={{marginLeft:8}} label="Show names" control={<Checkbox checked={options.showPodNames} onChange={() => handleChange({showNames:!options.showPodNames})} disabled={props.disabled}/>} />
+            </Grid>
+            <Grid item >
+                <FormControlLabel style={{marginLeft:8}}  label="Follow log" control={<Checkbox checked={options.followLog} onChange={() => handleChange({followLog:!options.followLog})} />} disabled={props.disabled}/>
+            </Grid>
+            <Grid item >
+                <FormControlLabel style={{marginLeft:8}}  label="Wrap lines" control={<Checkbox checked={options.wrapLines} onChange={() => handleChange({wrapLines:!options.wrapLines})} />} disabled={props.disabled}/>
             </Grid>
             <Grid item >
                 <Typography style={{fontSize:9, marginLeft:20, marginTop:4, marginBottom:6}}>Powered by <a href='https://jfvilas.github.io/kwirth/' target='_blank' style={{color:'blue'}}>Kwirth</a></Typography>
