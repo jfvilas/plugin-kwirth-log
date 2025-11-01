@@ -96,7 +96,7 @@ For Kwirth plugin to be usable on the frontend, you must tailor your Entity Page
 
     ```yaml
     metadata:
-      annotaations:
+      annotations:
         backstage.io/kubernetes-id: entity001
     ```
 

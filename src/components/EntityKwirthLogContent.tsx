@@ -18,21 +18,17 @@ import useAsync from 'react-use/esm/useAsync'
 
 import { Progress, WarningPanel } from '@backstage/core-components'
 import { alertApiRef, useApi } from '@backstage/core-plugin-api'
-import { ANNOTATION_BACKSTAGE_KUBERNETES_LABELID, ANNOTATION_BACKSTAGE_KUBERNETES_LABELSELECTOR, isKwirthAvailable, ClusterValidPods, PodData, ILogLine, IStatusLine } from '@jfvilas/plugin-kwirth-common'
+import { ANNOTATION_BACKSTAGE_KUBERNETES_LABELID, ANNOTATION_BACKSTAGE_KUBERNETES_LABELSELECTOR, isKwirthAvailable, ClusterValidPods, PodData, ILogLine, IStatusLine, getPodList, getContainerList, IBackendInfo } from '@jfvilas/plugin-kwirth-common'
 import { MissingAnnotationEmptyState, useEntity } from '@backstage/plugin-catalog-react'
 
 // kwirth
-import { kwirthLogApiRef } from '../../api'
+import { kwirthLogApiRef } from '../api'
 import { accessKeySerialize, ILogMessage, InstanceMessageActionEnum, InstanceConfigScopeEnum, InstanceConfigViewEnum, IInstanceMessage, InstanceMessageTypeEnum, ISignalMessage, SignalMessageLevelEnum, InstanceConfigObjectEnum, InstanceConfig, InstanceMessageFlowEnum, InstanceMessageChannelEnum, IOpsMessage, OpsCommandEnum, IRouteMessage, IOpsMessageResponse } from '@jfvilas/kwirth-common'
-import { KwirthNews } from '../KwirthNews/KwirthNews'
 
 // kwirthlog components
-import { ComponentNotFound, ErrorType } from '../ComponentNotFound'
-import { ObjectSelector } from '../ObjectSelector'
-import { IOptions, Options } from '../Options'
-import { ClusterList } from '../ClusterList'
-import { StatusLog } from '../StatusLog'
-
+import { IOptions } from './IOptions'
+import { Options } from './Options'
+import { KwirthNews, ComponentNotFound, ObjectSelector, StatusLog, ClusterList, ErrorType } from '@jfvilas/plugin-kwirth-frontend'
 
 // Material-UI
 import { Grid, Card, CardHeader, CardContent, Box, TextField } from '@material-ui/core'
@@ -48,7 +44,7 @@ import InfoIcon from '@material-ui/icons/Info'
 import WarningIcon from '@material-ui/icons/Warning'
 import ErrorIcon from '@material-ui/icons/Error'
 import DownloadIcon from '@material-ui/icons/CloudDownload'
-import KwirthLogLogo from '../../assets/kwirthlog-logo.svg'
+import KwirthLogLogo from '../assets/kwirthlog-logo.svg'
 import RefreshIcon from '@material-ui/icons/Refresh'
 
 const LOG_MAX_MESSAGES=1000
@@ -66,7 +62,7 @@ export const EntityKwirthLogContent = (props:IProps) => {
     const { entity } = useEntity()
     const kwirthLogApi = useApi(kwirthLogApiRef)
     const alertApi = useApi(alertApiRef)
-    const [resources, setResources] = useState<ClusterValidPods[]>([])
+    const [validClusters, setResources] = useState<ClusterValidPods[]>([])
     const [selectedClusterName, setSelectedClusterName] = useState('')
     const [selectedNamespaces, setSelectedNamespaces] = useState<string[]>([])
     const [selectedPodNames, setSelectedPodNames] = useState<string[]>([])
@@ -91,7 +87,7 @@ export const EntityKwirthLogContent = (props:IProps) => {
     const preRef = useRef<HTMLPreElement|null>(null)
     const lastRef = useRef<HTMLPreElement|null>(null)
     const [ backendVersion, setBackendVersion ] = useState<string>('')
-    const [ backendInfo, setBackendInfo ] = useState<any>(undefined)
+    const [ backendInfo, setBackendInfo ] = useState<IBackendInfo>()
     const { loading, error } = useAsync ( async () => {
         if (backendVersion==='') setBackendVersion(await kwirthLogApi.getVersion())
         if (!backendInfo) setBackendInfo(await kwirthLogApi.getInfo())
@@ -130,21 +126,34 @@ export const EntityKwirthLogContent = (props:IProps) => {
         stopLogViewer()
     }
 
-    const onSelectCluster = (name:string|undefined) => {
-        if (name) {
-            setSelectedClusterName(name)
-            setMessages([{
-                type: InstanceMessageTypeEnum.SIGNAL,
-                text: 'Select namespace in order to decide which pod logs to view.',
-                namespace: '',
-                pod: '',
-                container: ''
-            }])
-            setSelectedNamespaces([])
+    const onSelectCluster = (clusterName:string|undefined) => {
+        if (started) onClickStop()
+        if (clusterName) {
+            setSelectedClusterName(clusterName)
             setSelectedPodNames([])
             setSelectedContainerNames([])
             setStatusMessages([])
-            onClickStop()
+            let cluster = validClusters.find(cluster => cluster.name === clusterName)
+
+            if (cluster && cluster.pods) {
+                let validNamespaces = Array.from(new Set(cluster.pods.map(pod => pod.namespace)))
+                if (validNamespaces.length === 1) {
+                    setSelectedNamespaces(validNamespaces)
+                    let podList = getPodList (cluster.pods, validNamespaces)
+                    setSelectedPodNames(podList.map(pod => pod.name))
+                    setSelectedContainerNames(getContainerList(cluster.pods, validNamespaces, podList.map(pod => pod.name)))
+                }
+                else {
+                    setMessages([{
+                        type: InstanceMessageTypeEnum.SIGNAL,
+                        text: 'Select namespace in order to decide which pod logs to view.',
+                        namespace: '',
+                        pod: '',
+                        container: ''
+                    }])
+                    setSelectedNamespaces([])
+                }
+            }
         }
     }
 
@@ -268,12 +277,12 @@ export const EntityKwirthLogContent = (props:IProps) => {
     }
 
     const websocketOnOpen = (ws:WebSocket, options:IOptions) => {
-        let cluster=resources.find(cluster => cluster.name === selectedClusterName)
+        let cluster=validClusters.find(cluster => cluster.name === selectedClusterName)
         if (!cluster) {
             addMessage(SignalMessageLevelEnum.ERROR,'No cluster selected')
             return
         }
-        let pods = cluster.data.filter(p => selectedNamespaces.includes(p.namespace))
+        let pods = cluster.pods.filter(p => selectedNamespaces.includes(p.namespace))
         if (!pods) {
             addMessage(SignalMessageLevelEnum.ERROR,'No pods found')
             return
@@ -319,7 +328,7 @@ export const EntityKwirthLogContent = (props:IProps) => {
     }
 
     const startLogViewer = (options:IOptions) => {
-        let cluster=resources.find(cluster => cluster.name===selectedClusterName);
+        let cluster=validClusters.find(cluster => cluster.name===selectedClusterName);
         if (!cluster) {
             addMessage(SignalMessageLevelEnum.ERROR,'No cluster selected')
             return
@@ -391,7 +400,7 @@ export const EntityKwirthLogContent = (props:IProps) => {
 
     const onClickRestart = () => {
         // we perform a route command from channel 'log' to channel 'ops'
-        var cluster=resources.find(cluster => cluster.name===selectedClusterName);
+        var cluster=validClusters.find(cluster => cluster.name===selectedClusterName);
         if (!cluster) {
             addMessage(SignalMessageLevelEnum.ERROR,'No cluster selected')
             return
@@ -406,7 +415,7 @@ export const EntityKwirthLogContent = (props:IProps) => {
             return
         }
 
-        let pods:PodData[] = (cluster.data as PodData[]).filter(pod => selectedNamespaces.includes(pod.namespace))
+        let pods:PodData[] = (cluster.pods as PodData[]).filter(pod => selectedNamespaces.includes(pod.namespace))
         for (let pod of pods) {
             let opsMessage:IOpsMessage = {
                 msgtype: 'opsmessage',
@@ -440,7 +449,7 @@ export const EntityKwirthLogContent = (props:IProps) => {
 
     const actionButtons = () => {
         let hasViewKey=false, hasRestartKey = false
-        let cluster=resources.find(cluster => cluster.name===selectedClusterName)
+        let cluster=validClusters.find(cluster => cluster.name===selectedClusterName)
         if (cluster) {
             hasViewKey = Boolean(cluster.accessKeys.get(InstanceConfigScopeEnum.VIEW))
             hasRestartKey = Boolean(cluster.accessKeys.get(InstanceConfigScopeEnum.RESTART))
@@ -544,21 +553,21 @@ export const EntityKwirthLogContent = (props:IProps) => {
             <MissingAnnotationEmptyState readMoreUrl='https://github.com/jfvilas/plugin-kwirth-log' annotation={[ANNOTATION_BACKSTAGE_KUBERNETES_LABELID, ANNOTATION_BACKSTAGE_KUBERNETES_LABELSELECTOR]}/>
         )}
 
-        { isKwirthAvailable(entity) && !loading && resources && resources.length===0 &&
+        { isKwirthAvailable(entity) && !loading && validClusters && validClusters.length===0 &&
             <ComponentNotFound error={ErrorType.NO_CLUSTERS} entity={entity}/>
         }
 
-        { isKwirthAvailable(entity) && !loading && resources && resources.length>0 && resources.reduce((sum,cluster) => sum+cluster.data.length, 0)===0 &&
+        { isKwirthAvailable(entity) && !loading && validClusters && validClusters.length>0 && validClusters.reduce((sum,cluster) => sum+cluster.pods.length, 0)===0 &&
             <ComponentNotFound error={ErrorType.NO_PODS} entity={entity}/>
         }
 
-        { isKwirthAvailable(entity) && !loading && resources && resources.length>0 && resources.reduce((sum,cluster) => sum+cluster.data.length, 0)>0 &&
+        { isKwirthAvailable(entity) && !loading && validClusters && validClusters.length>0 && validClusters.reduce((sum,cluster) => sum+cluster.pods.length, 0)>0 &&
             <Box sx={{ display: 'flex', height:'70vh'}}>
                 <Box sx={{ width: '200px', maxWidth:'200px'}}>
                     <Grid container direction='column'>
                         <Grid item>        
                             <Card>
-                                <ClusterList resources={resources} selectedClusterName={selectedClusterName} onSelect={onSelectCluster}/>
+                                <ClusterList resources={validClusters} selectedClusterName={selectedClusterName} onSelect={onSelectCluster}/>
                             </Card>
                         </Grid>
                         <Grid item>
@@ -591,13 +600,12 @@ export const EntityKwirthLogContent = (props:IProps) => {
                             <Grid container style={{alignItems:'end'}}>
                                 <Grid item style={{width:'66%'}}>
                                     <Typography style={{marginLeft:14}}>
-                                        <ObjectSelector cluster={resources.find(cluster => cluster.name === selectedClusterName)!} onSelect={onSelectObject} disabled={selectedClusterName === '' || started || paused.current} selectedNamespaces={selectedNamespaces} selectedPodNames={selectedPodNames} selectedContainerNames={selectedContainerNames}/>
+                                        <ObjectSelector cluster={validClusters.find(cluster => cluster.name === selectedClusterName)!} onSelect={onSelectObject} disabled={selectedClusterName === '' || started || paused.current} selectedNamespaces={selectedNamespaces} selectedPodNames={selectedPodNames} selectedContainerNames={selectedContainerNames} scope={InstanceConfigScopeEnum.VIEW}/>
                                     </Typography>
                                 </Grid>
                                 <Grid item style={{width:'33%', marginLeft:0}} >
                                     <TextField value={filter} onChange={onChangeFilter} label='Filter' fullWidth style={{marginBottom:6, marginLeft:0}} disabled={!started} ></TextField>
                                 </Grid>
-
                             </Grid>
                             <Divider/>
                             <CardContent style={{ flexGrow: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>

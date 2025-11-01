@@ -13,8 +13,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import { createRouteRef } from '@backstage/core-plugin-api';
+import { createRouteRef } from '@backstage/core-plugin-api'
 
 export const rootRouteRef = createRouteRef({
   id: 'kwirthlog',
-});
+})
