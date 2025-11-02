@@ -29,6 +29,7 @@ import { accessKeySerialize, ILogMessage, InstanceMessageActionEnum, InstanceCon
 import { IOptions } from './IOptions'
 import { Options } from './Options'
 import { KwirthNews, ComponentNotFound, ObjectSelector, StatusLog, ClusterList, ErrorType } from '@jfvilas/plugin-kwirth-frontend'
+import { VERSION } from '../index'
 
 // Material-UI
 import { Grid, Card, CardHeader, CardContent, Box, TextField, InputAdornment } from '@material-ui/core'
@@ -604,7 +605,7 @@ export const EntityKwirthLogContent: React.FC<IProps> = (props:IProps) => {
                         </Grid>
                         <Grid item>
                             <Card>
-                                <KwirthNews latestVersions={backendInfo} backendVersion={backendVersion}/>
+                                <KwirthNews latestVersions={backendInfo} backendVersion={backendVersion} ownVersion={VERSION}/>
                             </Card>
                         </Grid>
                     </Grid>

@@ -56,7 +56,7 @@ It's very simple and straightforward, it is in fact very similar to any other fo
 
     ```sh
     # From your Backstage root directory
-    yarn --cwd packages/app add @jfvilas/plugin-kwirth-log @jfvilas/plugin-kwirth-common @jfvilas/kwirth-common
+    yarn --cwd packages/app add @jfvilas/plugin-kwirth-log @jfvilas/plugin-kwirth-frontend @jfvilas/plugin-kwirth-common @jfvilas/kwirth-common
     ```
 
 3. Make sure the [Kwirth backend plugin](https://www.npmjs.com/package/@jfvilas/plugin-kwirth-backend#configure) is installed and configured.

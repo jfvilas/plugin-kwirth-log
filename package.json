@@ -1,6 +1,6 @@
 {
   "name": "@jfvilas/plugin-kwirth-log",
-  "version": "0.13.0",
+  "version": "0.13.1",
   "description": "Frontend plugin for viewing real-time Kubernetes logs in Backstage",
   "keywords": [
     "Backstage",
@@ -15,6 +15,7 @@
     "pluginId": "kwirth",
     "pluginPackages": [
       "@jfvilas/plugin-kwirth-log",
+      "@jfvilas/plugin-kwirth-frontend",
       "@jfvilas/plugin-kwirth-backend",
       "@jfvilas/plugin-kwirth-common"
     ]
