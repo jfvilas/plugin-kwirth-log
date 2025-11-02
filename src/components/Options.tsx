@@ -48,7 +48,7 @@ const Options = (props: IProps) => {
                 <FormControlLabel style={{marginLeft:8}} label="Show timestamp" control={<Checkbox checked={options.showTimestamp} onChange={() => handleChange({showTimestamp:!options.showTimestamp})} disabled={props.disabled}/>} />
             </Grid>
             <Grid item >
-                <FormControlLabel style={{marginLeft:8}} label="Show names" control={<Checkbox checked={options.showPodNames} onChange={() => handleChange({showNames:!options.showPodNames})} disabled={props.disabled}/>} />
+                <FormControlLabel style={{marginLeft:8}} label="Show names" control={<Checkbox checked={options.showNames} onChange={() => handleChange({showNames:!options.showNames})} disabled={props.disabled}/>} />
             </Grid>
             <Grid item >
                 <FormControlLabel style={{marginLeft:8}}  label="Follow log" control={<Checkbox checked={options.followLog} onChange={() => handleChange({followLog:!options.followLog})} />} disabled={props.disabled}/>

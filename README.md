@@ -1,8 +1,6 @@
 # Backstage frontend KwirthLog plugin
 This package is a Backstage frontend plugin for **viewing Kubernetes logs** in real-time (live-streaming) via Kwirth.
 
-**NOTE: KwithLog requires Kwirth vesrsion 0.3.160 or greater**
-
 This Backstage plugin allows you to live-stream Kubernetes logs associated to your Backstage entities directly inside your Backstage instance. It's very important to understand that for this plugin to work...:
 
   - You need to install the Kwirth [Backstage backend plugin](https://www.npmjs.com/package/@jfvilas/plugin-kwirth-backend).
@@ -11,6 +9,17 @@ This Backstage plugin allows you to live-stream Kubernetes logs associated to yo
 Kwirth is a really-easy-to-use data-exporting system for Kubernetes that runs in only one pod (*no database is needed*). Refer to Kwirth GitHub project for [info on installation](https://github.com/jfvilas/kwirth?tab=readme-ov-file#installation). Kwirth installation is *one command away* from you.
 
 You can access [Kwirth project here](https://github.com/jfvilas/kwirth).
+
+
+## Version compatibility
+Following table shows version compatibility between this Kwirth Backstage plugin and Kwirth Core server.
+
+| Plugin Kwirth version | Kwirth version |
+|-|-|
+|0.13.0|0.4.131|
+|0.12.8|0.4.45|
+|0.12.5|0.4.20|
+|0.11.3|0.3.160|
 
 
 ## What is this plugin for?
@@ -36,16 +45,6 @@ Let's explain this by following a user working sequence:
 7. With all this information, the backend builds a unique response containing all the pods the user have access to, and all the API keys needed to access those logs.
 
 If everyting is correctly configured and tagged, the user should see a list of clusters. When selecting a cluster, the user should see a list of namespaces where the entity is running.
-
-
-## Version compatibility
-Following table shows version compatibility between this Kwirth Backstage plugin and Kwirth Core server.
-
-| Plugin Kwirth version | Kwirth version |
-|-|-|
-|0.12.8|0.4.45|
-|0.12.5|0.4.20|
-|0.11.3|0.3.160|
 
 
 ## Installation
@@ -78,7 +77,7 @@ For Kwirth plugin to be usable on the frontend, you must tailor your Entity Page
     ```
 
     Then, add a tab to your EntityPage (the 'if' is optional, you can keep the 'KwirthLog' tab always visible if you prefer to do it that way).
-    ````jsx
+    ```jsx
     // Note: Add to any other Pages as well (e.g. defaultEntityPage or webSiteEntityPage, for example)
     const serviceEntityPage = (
       <EntityLayout>
@@ -88,6 +87,23 @@ For Kwirth plugin to be usable on the frontend, you must tailor your Entity Page
         </EntityLayout.Route>
       </EntityLayout>
     )
+    ```
+
+    You can setup some default *viewing* options on the `EntityKwirthLogContent` component, so, when the entity loads the default options will be set. These options are:
+    - `formStart`
+    - `showNames`
+    - `showTimestamp`
+    - `followLog`
+    - `wrapLines`
+    (The meaning of these properties are explained at the end of this document)
+
+    For example, you could setup your default log stream like this:
+    ```jsx
+      ...
+      <EntityLayout.Route if={isKwirthAvailable} path="/kwirthlog" title="KwirthLog">
+        <EntityKwirthLogContent enableRestart={false} fromStrat={true} showTimestamp={true} wrapLines={true} />
+      </EntityLayout.Route>
+      ...
     ```
 
 2. Label your catalog-info according to one of these two startegies:
@@ -104,7 +120,7 @@ For Kwirth plugin to be usable on the frontend, you must tailor your Entity Page
 
     ```yaml
     metadata:
-      annotations:
+      annotaations:
         backstage.io/kubernetes-id: 'app=core,artifact=backend'
     ```
 
@@ -166,6 +182,13 @@ Now you will see your log refreshing in real-time. If you selected more than one
 
 ![running](https://raw.githubusercontent.com/jfvilas/plugin-kwirth-log/master/images/kwirthlog-running.png)
 
+### Filtering
+When the log stream starts you will see a filter text field you can use for filtering messages. The use is as follows:
+  - If you type something, the messages (or the pod names or the container names) are expected to match that text.
+  - If you select `Aa`, the text match will be performed taking **casing** into account.
+  - If you select `.*` then the text entered will be treated as a regular expression.
+  - You can select *casing* and *regex* if you want regexes to match taking casing into account.
+
 Feel free to open issues and ask for more features.
 
 ## Status information
@@ -182,3 +205,21 @@ This is how it feels:
 
 If you click on one of the status icons when theyr are enableds (coloured), you will see the detail of the status.
 ![status detail](https://raw.githubusercontent.com/jfvilas/plugin-kwirth-log/master/images/kwirthlog-status-detail.png)
+
+## Log stream options
+The log streaming system implemented in KwirthLog has some configuration options whose meaning is explained below.
+
+### From start (`fromStart`)
+If checked, the log streams will be retieved since pod start time. Please be careful with this option, it may impact your browser performance.
+
+### Show message time (`showTimestamp`)
+Decide whether to show timestamps next to messages or not. Usually your application logs messages with timestamp, but it this doesn't occur you can add message time (as provided by Kubernetes) to your messages.
+
+### Show pod names (`showNames`)
+Show pod names and container names next to messages. You may need to use this option if you are showing messages from different sources.
+
+### Follow log stream (`followLog`)
+If you activate this option, the log stream wil move to the end wehn a new messages arrives (it's like a `tail -f`).
+
+### Wrap log lines (`wrapLines`)
+Normally, KwirthLog will add hotizontal and vertical scrollers as needed in order to preserve original log lines, but you can activate this option to wrap lines and not to show horizontal scroller.

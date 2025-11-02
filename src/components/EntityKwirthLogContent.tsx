@@ -31,7 +31,7 @@ import { Options } from './Options'
 import { KwirthNews, ComponentNotFound, ObjectSelector, StatusLog, ClusterList, ErrorType } from '@jfvilas/plugin-kwirth-frontend'
 
 // Material-UI
-import { Grid, Card, CardHeader, CardContent, Box, TextField } from '@material-ui/core'
+import { Grid, Card, CardHeader, CardContent, Box, TextField, InputAdornment } from '@material-ui/core'
 import Divider from '@material-ui/core/Divider'
 import IconButton from '@material-ui/core/IconButton'
 import Typography from '@material-ui/core/Typography'
@@ -53,12 +53,12 @@ export interface IProps {
     enableRestart: boolean
     fromStart?: boolean
     showTimestamp?: boolean
-    showPodNames?: boolean
+    showNames?: boolean
     followLog?: boolean
     wrapLines?: boolean
 }
 
-export const EntityKwirthLogContent = (props:IProps) => { 
+export const EntityKwirthLogContent: React.FC<IProps> = (props:IProps) => { 
     const { entity } = useEntity()
     const kwirthLogApi = useApi(kwirthLogApiRef)
     const alertApi = useApi(alertApiRef)
@@ -78,7 +78,7 @@ export const EntityKwirthLogContent = (props:IProps) => {
     const kwirthLogOptionsRef = useRef<IOptions>({
         fromStart: props.fromStart!==undefined? props.fromStart : false, 
         showTimestamp: props.showTimestamp!==undefined?props.showTimestamp:false, 
-        showPodNames: props.showPodNames!==undefined?props.showPodNames : true, 
+        showNames: props.showNames!==undefined?props.showNames : true, 
         followLog: props.followLog!==undefined? props.followLog : true, 
         wrapLines: props.wrapLines!==undefined? props.wrapLines : false
     })
@@ -97,8 +97,12 @@ export const EntityKwirthLogContent = (props:IProps) => {
         setResources(data)
     })
     const buffer = useRef<Map<string,string>>(new Map())
-    const [filter, setFilter] = useState(undefined)
+    const [filter, setFilter] = useState<string>('')
+    const [filterCasing, setFilterCasing] = useState(false)
+    const [filterRegex, setFilterRegex] = useState(false)
 
+    const adornmentSelected= { margin: 0, borderWidth:1, borderStyle:'solid', borderColor:'gray', paddingLeft:3, paddingRight:3, backgroundColor:'gray', cursor: 'pointer', color:'white'}
+    const adornmentNotSelected = { margin: 0, borderWidth:1, borderStyle: 'solid', borderColor:'#f0f0f0', backgroundColor:'#f0f0f0', paddingLeft:3, paddingRight:3, cursor:'pointer'}
     const clickStart = (options:IOptions) => {
         if (!paused.current) {
             setStarted(true)
@@ -526,11 +530,34 @@ export const EntityKwirthLogContent = (props:IProps) => {
             return <>{logLine.text+'\n'}</>
         }
 
-        if (filter!==undefined && filter!=='') {
-            if (!logLine.text.includes(filter) && !logLine.pod.includes(filter) && !logLine.container.includes(filter)) return <></>
+        if (filter!=='') {
+            if (filterCasing) {
+                if (filterRegex) {
+                    try {
+                        const regex=new RegExp(filter)
+                        if (!regex.test(logLine.text) && !regex.test(logLine.pod) && !regex.test(logLine.container)) return <></>
+                    }
+                    catch { return <></> }
+                }
+                else {
+                    if (!logLine.text.includes(filter) && !logLine.pod.includes(filter) && !logLine.container.includes(filter)) return <></>
+                }
+            }
+            else {
+                if (filterRegex) {
+                    try {
+                        const regex=new RegExp(filter.toLocaleLowerCase())
+                        if (!regex.test(logLine.text.toLocaleLowerCase()) && !regex.test(logLine.pod.toLocaleLowerCase()) && !regex.test(logLine.container.toLocaleLowerCase())) return <></>
+                    }
+                    catch { return <></> }
+                }
+                else {
+                    if (!logLine.text.toLocaleLowerCase().includes(filter.toLowerCase()) && !logLine.pod.toLocaleLowerCase().includes(filter.toLocaleLowerCase()) && !logLine.container.toLocaleLowerCase().includes(filter.toLocaleLowerCase())) return <></>
+                }
+            }
         }
         let podPrefix = <></>
-        if (selectedPodNames.length !== 1 || kwirthLogOptionsRef.current.showPodNames) {  // +++test
+        if (selectedPodNames.length !== 1 || kwirthLogOptionsRef.current.showNames) {  // +++test
             podPrefix  = <span style={{color:"green"}}>{logLine.pod+' '}</span>
         }
 
@@ -604,7 +631,18 @@ export const EntityKwirthLogContent = (props:IProps) => {
                                     </Typography>
                                 </Grid>
                                 <Grid item style={{width:'33%', marginLeft:0}} >
-                                    <TextField value={filter} onChange={onChangeFilter} label='Filter' fullWidth style={{marginBottom:6, marginLeft:0}} disabled={!started} ></TextField>
+                                    <TextField value={filter} onChange={onChangeFilter} label='Filter' fullWidth style={{marginBottom:6, marginLeft:0}} disabled={!started} 
+                                        InputProps={{    endAdornment: 
+                                            <>
+                                                <InputAdornment position="start" onClick={() => started && setFilterRegex(!filterRegex)} style={{margin: 0}}>
+                                                    <Typography style={filterRegex? adornmentSelected : adornmentNotSelected}>.*</Typography>
+                                                </InputAdornment>
+                                                <InputAdornment position="start" onClick={() => started && setFilterCasing(!filterCasing)} style={{margin: 0, marginLeft:1}}>
+                                                    <Typography style={filterCasing? adornmentSelected : adornmentNotSelected}>Aa</Typography>
+                                                </InputAdornment>
+                                            </>
+                                        }}
+                                    />
                                 </Grid>
                             </Grid>
                             <Divider/>

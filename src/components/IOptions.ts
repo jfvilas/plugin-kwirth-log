@@ -16,7 +16,7 @@ limitations under the License.
 export interface IOptions {
     fromStart: boolean
     showTimestamp: boolean
-    showPodNames: boolean
+    showNames: boolean
     followLog: boolean
     wrapLines: boolean
 }
