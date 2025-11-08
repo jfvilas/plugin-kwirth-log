@@ -18,6 +18,7 @@ import { kwirthLogApiRef, KwirthLogClient } from './api'
 import { createApiFactory, createPlugin, createRoutableExtension } from '@backstage/core-plugin-api'
 import { discoveryApiRef, fetchApiRef } from '@backstage/core-plugin-api'
 import { rootRouteRef } from './routes'
+import { IEntityKwirthLogProps } from './components/EntityKwirthLogContent'
 
 export const kwirthLogPlugin = createPlugin({
   id: 'kwirthlog',  
@@ -38,11 +39,11 @@ export const kwirthLogPlugin = createPlugin({
   }
 })
 
-export const EntityKwirthLogContent = kwirthLogPlugin.provide(
+export const EntityKwirthLogContent : (props: IEntityKwirthLogProps) => JSX.Element = kwirthLogPlugin.provide(
   createRoutableExtension({
     name: 'EntityKwirthLogContent',
     component: () =>
-      import('./components/EntityKwirthLogContent').then(m => m.EntityKwirthLogContent),
+      import('./components/EntityKwirthLogContent').then(m => m.EntityKwirthLogContent as (props: IEntityKwirthLogProps) => JSX.Element),
     mountPoint: rootRouteRef
   })
 )

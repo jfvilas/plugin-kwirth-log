@@ -50,7 +50,7 @@ import RefreshIcon from '@material-ui/icons/Refresh'
 
 const LOG_MAX_MESSAGES=1000
 
-export interface IProps {
+export interface IEntityKwirthLogProps {
     enableRestart: boolean
     fromStart?: boolean
     showTimestamp?: boolean
@@ -59,7 +59,7 @@ export interface IProps {
     wrapLines?: boolean
 }
 
-export const EntityKwirthLogContent: React.FC<IProps> = (props:IProps) => { 
+export const EntityKwirthLogContent: React.FC<IEntityKwirthLogProps> = (props:IEntityKwirthLogProps) => { 
     const { entity } = useEntity()
     const kwirthLogApi = useApi(kwirthLogApiRef)
     const alertApi = useApi(alertApiRef)
