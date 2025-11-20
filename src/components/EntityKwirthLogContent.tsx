@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import useAsync from 'react-use/esm/useAsync'
 
 import { Progress, WarningPanel } from '@backstage/core-components'
@@ -29,10 +29,9 @@ import { accessKeySerialize, ILogMessage, InstanceMessageActionEnum, InstanceCon
 import { IOptions } from './IOptions'
 import { Options } from './Options'
 import { KwirthNews, ComponentNotFound, ObjectSelector, StatusLog, ClusterList, ErrorType } from '@jfvilas/plugin-kwirth-frontend'
-import { VERSION } from '../index'
 
 // Material-UI
-import { Grid, Card, CardHeader, CardContent, Box, TextField, InputAdornment } from '@material-ui/core'
+import { Grid, Card, CardHeader, CardContent, Box, TextField, InputAdornment, BoxProps } from '@material-ui/core'
 import Divider from '@material-ui/core/Divider'
 import IconButton from '@material-ui/core/IconButton'
 import Typography from '@material-ui/core/Typography'
@@ -47,6 +46,10 @@ import ErrorIcon from '@material-ui/icons/Error'
 import DownloadIcon from '@material-ui/icons/CloudDownload'
 import KwirthLogLogo from '../assets/kwirthlog-logo.svg'
 import RefreshIcon from '@material-ui/icons/Refresh'
+import { VERSION } from '../version'
+
+type BoxWithRefProps = BoxProps & { ref?: React.Ref<HTMLDivElement> }
+const RefBox = Box as React.FC<BoxWithRefProps>
 
 const LOG_MAX_MESSAGES=1000
 
@@ -57,6 +60,8 @@ export interface IEntityKwirthLogProps {
     showNames?: boolean
     followLog?: boolean
     wrapLines?: boolean
+    hideVersion?: boolean
+    excludeContainers?: string[]
 }
 
 export const EntityKwirthLogContent: React.FC<IEntityKwirthLogProps> = (props:IEntityKwirthLogProps) => { 
@@ -101,9 +106,16 @@ export const EntityKwirthLogContent: React.FC<IEntityKwirthLogProps> = (props:IE
     const [filter, setFilter] = useState<string>('')
     const [filterCasing, setFilterCasing] = useState(false)
     const [filterRegex, setFilterRegex] = useState(false)
+    const logBoxRef = useRef<HTMLDivElement | null>(null)
+    const [logBoxTop, setLogBoxTop] = useState(0)
 
     const adornmentSelected= { margin: 0, borderWidth:1, borderStyle:'solid', borderColor:'gray', paddingLeft:3, paddingRight:3, backgroundColor:'gray', cursor: 'pointer', color:'white'}
     const adornmentNotSelected = { margin: 0, borderWidth:1, borderStyle: 'solid', borderColor:'#f0f0f0', backgroundColor:'#f0f0f0', paddingLeft:3, paddingRight:3, cursor:'pointer'}
+
+    useEffect(() => {
+        if (logBoxRef.current) setLogBoxTop(logBoxRef.current.getBoundingClientRect().top)
+    })
+
     const clickStart = (options:IOptions) => {
         if (!paused.current) {
             setStarted(true)
@@ -146,7 +158,7 @@ export const EntityKwirthLogContent: React.FC<IEntityKwirthLogProps> = (props:IE
                     setSelectedNamespaces(validNamespaces)
                     let podList = getPodList (cluster.pods, validNamespaces)
                     setSelectedPodNames(podList.map(pod => pod.name))
-                    setSelectedContainerNames(getContainerList(cluster.pods, validNamespaces, podList.map(pod => pod.name)))
+                    setSelectedContainerNames(getContainerList(cluster.pods, validNamespaces, podList.map(pod => pod.name), props.excludeContainers || []))
                 }
                 else {
                     setMessages([{
@@ -531,6 +543,10 @@ export const EntityKwirthLogContent: React.FC<IEntityKwirthLogProps> = (props:IE
             return <>{logLine.text+'\n'}</>
         }
 
+        if (props.excludeContainers && props.excludeContainers.length>0) {
+            if (props.excludeContainers.includes(logLine.container)) return <></>
+        }
+
         if (filter!=='') {
             if (filterCasing) {
                 if (filterRegex) {
@@ -557,6 +573,7 @@ export const EntityKwirthLogContent: React.FC<IEntityKwirthLogProps> = (props:IE
                 }
             }
         }
+
         let podPrefix = <></>
         if (selectedPodNames.length !== 1 || kwirthLogOptionsRef.current.showNames) {  // +++test
             podPrefix  = <span style={{color:"green"}}>{logLine.pod+' '}</span>
@@ -590,7 +607,7 @@ export const EntityKwirthLogContent: React.FC<IEntityKwirthLogProps> = (props:IE
         }
 
         { isKwirthAvailable(entity) && !loading && validClusters && validClusters.length>0 && validClusters.reduce((sum,cluster) => sum+cluster.pods.length, 0)>0 &&
-            <Box sx={{ display: 'flex', height:'70vh'}}>
+            <RefBox ref={logBoxRef as any} sx={{ display: 'flex', height: `calc(100vh - ${logBoxTop}px - 25px)`}}>
                 <Box sx={{ width: '200px', maxWidth:'200px'}}>
                     <Grid container direction='column'>
                         <Grid item>        
@@ -603,11 +620,13 @@ export const EntityKwirthLogContent: React.FC<IEntityKwirthLogProps> = (props:IE
                                 <Options options={kwirthLogOptionsRef.current} onChange={onChangeLogConfig} disabled={selectedContainerNames.length === 0 || started || paused.current}/>
                             </Card>
                         </Grid>
-                        <Grid item>
-                            <Card>
-                                <KwirthNews latestVersions={backendInfo} backendVersion={backendVersion} ownVersion={VERSION}/>
-                            </Card>
-                        </Grid>
+                        {!props.hideVersion &&
+                            <Grid item>
+                                <Card>
+                                    <KwirthNews latestVersions={backendInfo} backendVersion={backendVersion} ownVersion={VERSION}/>
+                                </Card>
+                            </Grid>
+                        }
                     </Grid>
                 </Box>
 
@@ -628,7 +647,7 @@ export const EntityKwirthLogContent: React.FC<IEntityKwirthLogProps> = (props:IE
                             <Grid container style={{alignItems:'end'}}>
                                 <Grid item style={{width:'66%'}}>
                                     <Typography style={{marginLeft:14}}>
-                                        <ObjectSelector cluster={validClusters.find(cluster => cluster.name === selectedClusterName)!} onSelect={onSelectObject} disabled={selectedClusterName === '' || started || paused.current} selectedNamespaces={selectedNamespaces} selectedPodNames={selectedPodNames} selectedContainerNames={selectedContainerNames} scope={InstanceConfigScopeEnum.VIEW}/>
+                                        <ObjectSelector cluster={validClusters.find(cluster => cluster.name === selectedClusterName)!} onSelect={onSelectObject} disabled={selectedClusterName === '' || started || paused.current} selectedNamespaces={selectedNamespaces} selectedPodNames={selectedPodNames} selectedContainerNames={selectedContainerNames} scope={InstanceConfigScopeEnum.VIEW} excludeCotainers={props.excludeContainers}/>
                                     </Typography>
                                 </Grid>
                                 <Grid item style={{width:'33%', marginLeft:0}} >
@@ -648,8 +667,8 @@ export const EntityKwirthLogContent: React.FC<IEntityKwirthLogProps> = (props:IE
                             </Grid>
                             <Divider/>
                             <CardContent style={{ flexGrow: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                                <Box style={{ overflowY: 'auto', width: '100%', flexGrow: 1 }}>
-                                    <pre ref={preRef} style={{overflowX: (kwirthLogOptionsRef.current.wrapLines?'hidden':'auto'),  whiteSpace: (kwirthLogOptionsRef.current.wrapLines ? 'pre-wrap' : 'pre'), wordBreak: kwirthLogOptionsRef.current.wrapLines ? 'break-word' : 'normal'}} >
+                                <Box style={{ overflowY: 'auto', width: '100%', flexGrow: 1, height: `calc(100vh - ${logBoxTop}px - 25px)`, overflowX: (kwirthLogOptionsRef.current.wrapLines?'hidden':'auto')}}>
+                                    <pre ref={preRef} style={{whiteSpace: (kwirthLogOptionsRef.current.wrapLines ? 'pre-wrap' : 'pre'), wordBreak: kwirthLogOptionsRef.current.wrapLines ? 'break-word' : 'normal'}} >
                                         { messages.map (m => formatMessage(m)) }
                                     </pre>
                                     <span ref={lastRef}/>
@@ -658,7 +677,7 @@ export const EntityKwirthLogContent: React.FC<IEntityKwirthLogProps> = (props:IE
                         </Card>
                     </>}
                 </Box>
-            </Box>
+            </RefBox>
         }
         { showStatusDialog && <StatusLog level={statusLevel} onClose={() => setShowStatusDialog(false)} statusMessages={statusMessages} onClear={statusClear}/>}
     </>)
