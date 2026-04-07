@@ -57,7 +57,7 @@ const Options = (props: IProps) => {
                 <FormControlLabel style={{marginLeft:8}}  label="Wrap lines" control={<Checkbox checked={options.wrapLines} onChange={() => handleChange({wrapLines:!options.wrapLines})} />} disabled={props.disabled}/>
             </Grid>
             <Grid item >
-                <Typography style={{fontSize:9, marginLeft:20, marginTop:4, marginBottom:6}}>Powered by <a href='https://jfvilas.github.io/kwirth/' target='_blank' style={{color:'blue'}}>Kwirth</a></Typography>
+                <Typography style={{fontSize:9, marginLeft:20, marginTop:4, marginBottom:6}}>Powered by <a href='https://jfvilas.github.io/kwirth/' target='_blank' style={{color:'#1D63ED'}}>Kwirth</a></Typography>
             </Grid>
         </Grid>
     </>)

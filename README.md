@@ -16,6 +16,7 @@ Following table shows version compatibility between this Kwirth Backstage plugin
 
 | Plugin Kwirth version | Kwirth version |
 |-|-|
+|0.14.2|0.5.21|
 |0.13.0|0.4.131|
 |0.12.8|0.4.45|
 |0.12.5|0.4.20|

@@ -23,7 +23,7 @@ import { MissingAnnotationEmptyState, useEntity } from '@backstage/plugin-catalo
 
 // kwirth
 import { kwirthLogApiRef } from '../api'
-import { accessKeySerialize, ILogMessage, InstanceMessageActionEnum, InstanceConfigScopeEnum, InstanceConfigViewEnum, IInstanceMessage, InstanceMessageTypeEnum, ISignalMessage, SignalMessageLevelEnum, InstanceConfigObjectEnum, InstanceConfig, InstanceMessageFlowEnum, InstanceMessageChannelEnum, IOpsMessage, OpsCommandEnum, IRouteMessage, IOpsMessageResponse } from '@jfvilas/kwirth-common'
+import { accessKeySerialize, ILogMessage, InstanceConfigScopeEnum, IInstanceMessage, ISignalMessage, IInstanceConfig, InstanceMessageChannelEnum, IOpsMessage, IRouteMessage, IOpsMessageResponse, EInstanceMessageType, EInstanceMessageFlow, EInstanceMessageAction, ESignalMessageLevel, EInstanceConfigObject, EInstanceConfigView, EOpsCommand } from '@jfvilas/kwirth-common'
 
 // kwirthlog components
 import { IOptions } from './IOptions'
@@ -89,7 +89,7 @@ export const EntityKwirthLogContent: React.FC<IEntityKwirthLogProps> = (props:IE
         wrapLines: props.wrapLines!==undefined? props.wrapLines : false
     })
     const [showStatusDialog, setShowStatusDialog] = useState(false)
-    const [statusLevel, setStatusLevel] = useState<SignalMessageLevelEnum>(SignalMessageLevelEnum.INFO)
+    const [statusLevel, setStatusLevel] = useState<ESignalMessageLevel>(ESignalMessageLevel.INFO)
     const preRef = useRef<HTMLPreElement|null>(null)
     const lastRef = useRef<HTMLPreElement|null>(null)
     const [ backendVersion, setBackendVersion ] = useState<string>('')
@@ -110,8 +110,7 @@ export const EntityKwirthLogContent: React.FC<IEntityKwirthLogProps> = (props:IE
     const [logBoxTop, setLogBoxTop] = useState(0)
 
     const adornmentSelected= { margin: 0, borderWidth:1, borderStyle:'solid', borderColor:'gray', paddingLeft:3, paddingRight:3, backgroundColor:'gray', cursor: 'pointer', color:'white'}
-    const adornmentNotSelected = { margin: 0, borderWidth:1, borderStyle: 'solid', borderColor:'#f0f0f0', backgroundColor:'#f0f0f0', paddingLeft:3, paddingRight:3, cursor:'pointer'}
-
+    const adornmentNotSelected = { margin: 0, borderWidth:1, borderStyle: 'solid', paddingLeft:3, paddingRight:3, cursor:'pointer'}
     useEffect(() => {
         if (logBoxRef.current) setLogBoxTop(logBoxRef.current.getBoundingClientRect().top)
     })
@@ -162,7 +161,7 @@ export const EntityKwirthLogContent: React.FC<IEntityKwirthLogProps> = (props:IE
                 }
                 else {
                     setMessages([{
-                        type: InstanceMessageTypeEnum.SIGNAL,
+                        type: EInstanceMessageType.SIGNAL,
                         text: 'Select namespace in order to decide which pod logs to view.',
                         namespace: '',
                         pod: '',
@@ -177,7 +176,7 @@ export const EntityKwirthLogContent: React.FC<IEntityKwirthLogProps> = (props:IE
     const processLogMessage = (wsEvent:any) => {
         let instanceMessage = JSON.parse(wsEvent.data) as IInstanceMessage
         switch (instanceMessage.type) {
-            case InstanceMessageTypeEnum.DATA:
+            case EInstanceMessageType.DATA:
                 let logMessage = instanceMessage as ILogMessage
                 let bname = logMessage.namespace+'/'+logMessage.pod+'/'+logMessage.container
                 let text = logMessage.text
@@ -217,8 +216,8 @@ export const EntityKwirthLogContent: React.FC<IEntityKwirthLogProps> = (props:IE
                     }
                 }
                 break
-            case InstanceMessageTypeEnum.SIGNAL:
-                if (instanceMessage.flow === InstanceMessageFlowEnum.RESPONSE && instanceMessage.action === InstanceMessageActionEnum.START) {
+            case EInstanceMessageType.SIGNAL:
+                if (instanceMessage.flow === EInstanceMessageFlow.RESPONSE && instanceMessage.action === EInstanceMessageAction.START) {
                     if (instanceMessage.instance!=='')
                         setInstance(instanceMessage.instance)
                     else {
@@ -233,13 +232,13 @@ export const EntityKwirthLogContent: React.FC<IEntityKwirthLogProps> = (props:IE
                     if (signalMessage.text) {
                         addMessage(signalMessage.level, signalMessage.text)
                         switch(signalMessage.level) {
-                            case SignalMessageLevelEnum.INFO:
+                            case ESignalMessageLevel.INFO:
                                 alertApi.post({ message: signalMessage.text, severity:'info', display:'transient' })
                                 break
-                            case SignalMessageLevelEnum.WARNING:
+                            case ESignalMessageLevel.WARNING:
                                 alertApi.post({ message: signalMessage.text, severity:'warning', display:'transient' })
                                 break
-                            case SignalMessageLevelEnum.ERROR:
+                            case ESignalMessageLevel.ERROR:
                                 alertApi.post({ message: signalMessage.text, severity:'error', display:'transient' })
                                 break
                             default:
@@ -250,17 +249,17 @@ export const EntityKwirthLogContent: React.FC<IEntityKwirthLogProps> = (props:IE
                 }
                 break
             default:
-                addMessage(SignalMessageLevelEnum.ERROR, 'Invalid message type received: ' + instanceMessage.type)
+                addMessage(ESignalMessageLevel.ERROR, 'Invalid message type received: ' + instanceMessage.type)
                 alertApi.post({ message: 'Invalid message type received: ' + instanceMessage.type, severity:'error', display:'transient' })
                 break
         }
     }
 
-    const addMessage = (level:SignalMessageLevelEnum, text:string) => {
+    const addMessage = (level:ESignalMessageLevel, text:string) => {
         setStatusMessages ((prev) => [...prev, {
             level,
             text,
-            type: InstanceMessageTypeEnum.SIGNAL,
+            type: EInstanceMessageType.SIGNAL,
         }])
     }
 
@@ -282,13 +281,13 @@ export const EntityKwirthLogContent: React.FC<IEntityKwirthLogProps> = (props:IE
             case InstanceMessageChannelEnum.OPS:
                 let opsMessage = instanceMessage as IOpsMessageResponse
                 if (opsMessage.data?.data) 
-                    addMessage (SignalMessageLevelEnum.WARNING, 'Operations message: '+opsMessage.data.data)
+                    addMessage (ESignalMessageLevel.WARNING, 'Operations message: '+opsMessage.data.data)
                 else
-                    addMessage (SignalMessageLevelEnum.WARNING, 'Operations message: '+JSON.stringify(opsMessage))
+                    addMessage (ESignalMessageLevel.WARNING, 'Operations message: '+JSON.stringify(opsMessage))
                 break
             default:
-                addMessage (SignalMessageLevelEnum.ERROR, 'Invalid channel in message: '+instanceMessage.channel)
-                addMessage (SignalMessageLevelEnum.ERROR, 'Invalid message: '+JSON.stringify(instanceMessage))
+                addMessage (ESignalMessageLevel.ERROR, 'Invalid channel in message: '+instanceMessage.channel)
+                addMessage (ESignalMessageLevel.ERROR, 'Invalid message: '+JSON.stringify(instanceMessage))
                 break
         }
     }
@@ -296,12 +295,12 @@ export const EntityKwirthLogContent: React.FC<IEntityKwirthLogProps> = (props:IE
     const websocketOnOpen = (ws:WebSocket, options:IOptions) => {
         let cluster=validClusters.find(cluster => cluster.name === selectedClusterName)
         if (!cluster) {
-            addMessage(SignalMessageLevelEnum.ERROR,'No cluster selected')
+            addMessage(ESignalMessageLevel.ERROR,'No cluster selected')
             return
         }
         let pods = cluster.pods.filter(p => selectedNamespaces.includes(p.namespace))
         if (!pods) {
-            addMessage(SignalMessageLevelEnum.ERROR,'No pods found')
+            addMessage(ESignalMessageLevel.ERROR,'No pods found')
             return
         }
         console.log(`WS connected`)
@@ -315,15 +314,15 @@ export const EntityKwirthLogContent: React.FC<IEntityKwirthLogProps> = (props:IE
                     }
                 }
             }
-            let iConfig:InstanceConfig = {
+            let iConfig:IInstanceConfig = {
                 channel: InstanceMessageChannelEnum.LOG,
-                objects: InstanceConfigObjectEnum.PODS,
-                action: InstanceMessageActionEnum.START,
-                flow: InstanceMessageFlowEnum.REQUEST,
+                objects: EInstanceConfigObject.PODS,
+                action: EInstanceMessageAction.START,
+                flow: EInstanceMessageFlow.REQUEST,
                 instance: '',
                 accessKey: accessKeySerialize(accessKey),
                 scope: InstanceConfigScopeEnum.VIEW,
-                view: (selectedContainerNames.length > 0 ? InstanceConfigViewEnum.CONTAINER : InstanceConfigViewEnum.POD),
+                view: (selectedContainerNames.length > 0 ? EInstanceConfigView.CONTAINER : EInstanceConfigView.POD),
                 namespace: selectedNamespaces.join(','),
                 group: '',
                 pod: selectedPodNames.map(p => p).join(','),
@@ -334,12 +333,12 @@ export const EntityKwirthLogContent: React.FC<IEntityKwirthLogProps> = (props:IE
                     maxMessages: LOG_MAX_MESSAGES,
                     fromStart: options.fromStart
                 },
-                type: InstanceMessageTypeEnum.SIGNAL
+                type: EInstanceMessageType.SIGNAL
             }
             ws.send(JSON.stringify(iConfig))
         }
         else {
-            addMessage(SignalMessageLevelEnum.ERROR,'No accessKey for starting log streaming')
+            addMessage(ESignalMessageLevel.ERROR,'No accessKey for starting log streaming')
             return
         }
     }
@@ -347,7 +346,7 @@ export const EntityKwirthLogContent: React.FC<IEntityKwirthLogProps> = (props:IE
     const startLogViewer = (options:IOptions) => {
         let cluster=validClusters.find(cluster => cluster.name===selectedClusterName);
         if (!cluster) {
-            addMessage(SignalMessageLevelEnum.ERROR,'No cluster selected')
+            addMessage(ESignalMessageLevel.ERROR,'No cluster selected')
             return
         }
 
@@ -361,7 +360,7 @@ export const EntityKwirthLogContent: React.FC<IEntityKwirthLogProps> = (props:IE
         }
         catch (err) {
             setMessages([ {
-                type: InstanceMessageTypeEnum.DATA,
+                type: EInstanceMessageType.DATA,
                 text: `Error opening log stream: ${err}`,
                 namespace: '',
                 pod: '',
@@ -380,7 +379,7 @@ export const EntityKwirthLogContent: React.FC<IEntityKwirthLogProps> = (props:IE
 
     const stopLogViewer = () => {
         messages.push({
-            type: InstanceMessageTypeEnum.DATA,
+            type: EInstanceMessageType.DATA,
             text: '============================================================================================================================',
             namespace: '',
             pod: '',
@@ -419,16 +418,16 @@ export const EntityKwirthLogContent: React.FC<IEntityKwirthLogProps> = (props:IE
         // we perform a route command from channel 'log' to channel 'ops'
         var cluster=validClusters.find(cluster => cluster.name===selectedClusterName);
         if (!cluster) {
-            addMessage(SignalMessageLevelEnum.ERROR,'No cluster selected')
+            addMessage(ESignalMessageLevel.ERROR,'No cluster selected')
             return
         }
         let restartKey = cluster.accessKeys.get(InstanceConfigScopeEnum.RESTART)
         if (!restartKey) {
-            addMessage(SignalMessageLevelEnum.ERROR,'No access key present')
+            addMessage(ESignalMessageLevel.ERROR,'No access key present')
             return
         }
         if (!instance) {
-            addMessage(SignalMessageLevelEnum.ERROR,'No instance has been established')
+            addMessage(ESignalMessageLevel.ERROR,'No instance has been established')
             return
         }
 
@@ -436,14 +435,14 @@ export const EntityKwirthLogContent: React.FC<IEntityKwirthLogProps> = (props:IE
         for (let pod of pods) {
             let opsMessage:IOpsMessage = {
                 msgtype: 'opsmessage',
-                action: InstanceMessageActionEnum.COMMAND,
-                flow: InstanceMessageFlowEnum.IMMEDIATE,
-                type: InstanceMessageTypeEnum.DATA,
+                action: EInstanceMessageAction.COMMAND,
+                flow: EInstanceMessageFlow.IMMEDIATE,
+                type: EInstanceMessageType.DATA,
                 channel: InstanceMessageChannelEnum.OPS,
                 instance: '',
                 id: '1',
                 accessKey: accessKeySerialize(restartKey),
-                command: OpsCommandEnum.RESTARTPOD,
+                command: EOpsCommand.RESTARTPOD,
                 namespace: pod.namespace,
                 group: '',
                 pod: pod.name,
@@ -453,9 +452,9 @@ export const EntityKwirthLogContent: React.FC<IEntityKwirthLogProps> = (props:IE
                 msgtype: 'routemessage',
                 accessKey: accessKeySerialize(restartKey),
                 destChannel: InstanceMessageChannelEnum.OPS,
-                action: InstanceMessageActionEnum.ROUTE,
-                flow: InstanceMessageFlowEnum.IMMEDIATE,
-                type: InstanceMessageTypeEnum.SIGNAL,
+                action: EInstanceMessageAction.ROUTE,
+                flow: EInstanceMessageFlow.IMMEDIATE,
+                type: EInstanceMessageType.SIGNAL,
                 channel: InstanceMessageChannelEnum.LOG,
                 instance: instance,
                 data: opsMessage
@@ -494,7 +493,7 @@ export const EntityKwirthLogContent: React.FC<IEntityKwirthLogProps> = (props:IE
     }
 
     const statusButtons = (title:string) => {
-        const show = (level:SignalMessageLevelEnum) => {
+        const show = (level:ESignalMessageLevel) => {
             setShowStatusDialog(true)
             setStatusLevel(level)
         }
@@ -509,21 +508,21 @@ export const EntityKwirthLogContent: React.FC<IEntityKwirthLogProps> = (props:IE
                     <Typography variant='h5'>{prepareText(title)}</Typography>
                 </Grid>
                 <Grid item style={{marginTop:'-8px'}}>
-                    <IconButton title="info" disabled={!statusMessages.some(m=>m.type === InstanceMessageTypeEnum.SIGNAL && m.level=== SignalMessageLevelEnum.INFO)} onClick={() => show(SignalMessageLevelEnum.INFO)}>
-                        <InfoIcon style={{ color:statusMessages.some(m=>m.type === InstanceMessageTypeEnum.SIGNAL && m.level=== SignalMessageLevelEnum.INFO)?'blue':'#BDBDBD'}}/>
+                    <IconButton title="info" disabled={!statusMessages.some(m=>m.type === EInstanceMessageType.SIGNAL && m.level=== ESignalMessageLevel.INFO)} onClick={() => show(ESignalMessageLevel.INFO)}>
+                        <InfoIcon style={{ color:statusMessages.some(m=>m.type === EInstanceMessageType.SIGNAL && m.level=== ESignalMessageLevel.INFO)?'#1D63ED':'#BDBDBD'}}/>
                     </IconButton>
-                    <IconButton title="warning" disabled={!statusMessages.some(m=>m.type === InstanceMessageTypeEnum.SIGNAL && m.level=== SignalMessageLevelEnum.WARNING)} onClick={() => show(SignalMessageLevelEnum.WARNING)} style={{marginLeft:'-16px'}}>
-                        <WarningIcon style={{ color:statusMessages.some(m=>m.type === InstanceMessageTypeEnum.SIGNAL && m.level=== SignalMessageLevelEnum.WARNING)?'orange':'#BDBDBD'}}/>
+                    <IconButton title="warning" disabled={!statusMessages.some(m=>m.type === EInstanceMessageType.SIGNAL && m.level=== ESignalMessageLevel.WARNING)} onClick={() => show(ESignalMessageLevel.WARNING)} style={{marginLeft:'-16px'}}>
+                        <WarningIcon style={{ color:statusMessages.some(m=>m.type === EInstanceMessageType.SIGNAL && m.level=== ESignalMessageLevel.WARNING)?'orange':'#BDBDBD'}}/>
                     </IconButton>
-                    <IconButton title="error" disabled={!statusMessages.some(m=>m.type === InstanceMessageTypeEnum.SIGNAL && m.level=== SignalMessageLevelEnum.ERROR)} onClick={() => show(SignalMessageLevelEnum.ERROR)} style={{marginLeft:'-16px'}}>
-                        <ErrorIcon style={{ color:statusMessages.some(m=>m.type === InstanceMessageTypeEnum.SIGNAL && m.level=== SignalMessageLevelEnum.ERROR)?'red':'#BDBDBD'}}/>
+                    <IconButton title="error" disabled={!statusMessages.some(m=>m.type === EInstanceMessageType.SIGNAL && m.level=== ESignalMessageLevel.ERROR)} onClick={() => show(ESignalMessageLevel.ERROR)} style={{marginLeft:'-16px'}}>
+                        <ErrorIcon style={{ color:statusMessages.some(m=>m.type === EInstanceMessageType.SIGNAL && m.level=== ESignalMessageLevel.ERROR)?'red':'#BDBDBD'}}/>
                     </IconButton>
                 </Grid>
             </Grid>
         )
     }
 
-    const statusClear = (level: SignalMessageLevelEnum) => {
+    const statusClear = (level: ESignalMessageLevel) => {
         setStatusMessages(statusMessages.filter(m=> m.level!==level))
         setShowStatusDialog(false)
     }
@@ -538,7 +537,7 @@ export const EntityKwirthLogContent: React.FC<IEntityKwirthLogProps> = (props:IE
         setFilter(event.target?.value)
     }
 
-    const formatMessage = (logLine:ILogLine) => {
+    const formatLogLine = (logLine:ILogLine) => {
         if (!logLine.pod) {
             return <>{logLine.text+'\n'}</>
         }
@@ -669,7 +668,7 @@ export const EntityKwirthLogContent: React.FC<IEntityKwirthLogProps> = (props:IE
                             <CardContent style={{ flexGrow: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                                 <Box style={{ overflowY: 'auto', width: '100%', flexGrow: 1, height: `calc(100vh - ${logBoxTop}px - 25px)`, overflowX: (kwirthLogOptionsRef.current.wrapLines?'hidden':'auto')}}>
                                     <pre ref={preRef} style={{whiteSpace: (kwirthLogOptionsRef.current.wrapLines ? 'pre-wrap' : 'pre'), wordBreak: kwirthLogOptionsRef.current.wrapLines ? 'break-word' : 'normal'}} >
-                                        { messages.map (m => formatMessage(m)) }
+                                        { messages.map (m => formatLogLine(m)) }
                                     </pre>
                                     <span ref={lastRef}/>
                                 </Box>                                
